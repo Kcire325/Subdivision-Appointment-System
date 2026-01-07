@@ -52,7 +52,7 @@ body {
 }
 
 .btn.slot-btn.selected {
-  background-color: #28a745;
+  background-color: #0d6efd; 
   color: white;
 }
 
@@ -61,7 +61,7 @@ body {
   /* REQUIRED */
 }
 
-.btn.slot-btn.active::after {
+.btn.slot-btn.selected::after {
   content: '✓';
   position: absolute;
   top: -6px;
@@ -71,6 +71,9 @@ body {
   width: 20px;
   height: 20px;
   border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 12px;
   font-weight: bold;
   border: 2px solid #007bff;

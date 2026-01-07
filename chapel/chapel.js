@@ -1,12 +1,14 @@
-// Calendar + Time Slot Integration
 document.addEventListener('DOMContentLoaded', function () {
 
     const calendarEl = document.getElementById('calendar');
     let selectedDate = null;
-    let selectedStartTime = null;
-    let selectedEndTime = null;
 
+    // Store selected slots
+    let selectedSlots = [];
+
+    // ===============================
     // Initialize FullCalendar
+    // ===============================
     const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         selectable: true,
@@ -14,11 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
         dateClick: function (info) {
             selectedDate = info.dateStr;
 
-            // Reset selected slot
-            selectedStartTime = null;
-            selectedEndTime = null;
+            // Reset slots
+            selectedSlots = [];
             document.querySelectorAll('.slot-btn')
-                .forEach(b => b.classList.remove('active'));
+                .forEach(b => b.classList.remove('selected'));
 
             // Show modal
             const myModal = new bootstrap.Modal(
@@ -43,22 +44,36 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
-    // ===============================
-    // Time Slot Button Selection
+   // ===============================
+    // Time Slot Selection (MULTI)
     // ===============================
     document.querySelectorAll('.slot-btn').forEach(btn => {
         btn.addEventListener('click', () => {
 
-            // Remove active from all
-            document.querySelectorAll('.slot-btn')
-                .forEach(b => b.classList.remove('active'));
+            const start = btn.dataset.start;
+            const end = btn.dataset.end;
 
-            // Add active to clicked
-            btn.classList.add('active');
+            // Check if this slot is already booked for the selected date
+            const isBooked = calendar.getEvents().some(event => {
+                const eventDate = event.start.toISOString().split('T')[0];
+                const eventStart = event.start.toTimeString().slice(0, 5);
+                return eventDate === selectedDate && eventStart === start;
+            });
 
-            // Store selected times
-            selectedStartTime = btn.dataset.start;
-            selectedEndTime = btn.dataset.end;
+            if (isBooked) {
+                alert('This time slot is already booked!');
+                return;
+            }
+
+            btn.classList.toggle('selected');
+
+            if (btn.classList.contains('selected')) {
+                selectedSlots.push({ start, end });
+            } else {
+                selectedSlots = selectedSlots.filter(
+                    slot => slot.start !== start
+                );
+            }
         });
     });
 
@@ -71,10 +86,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const phone = phoneInput.value.trim();
         const phoneIsValid = /^[0-9]*$/.test(phone);
 
-        // Validation
-        if (!username || !selectedStartTime) {
-            alert("Username and Time Slot are required");
-            return;
+        if (!username || selectedSlots.length === 0) {
+            alert("Username and at least one time slot are required");
+            return; 
         }
 
         if (!phoneIsValid) {
@@ -82,12 +96,14 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Add event to calendar
-        calendar.addEvent({
-            title: username,
-            start: selectedDate + 'T' + selectedStartTime,
-            end: selectedDate + 'T' + selectedEndTime,
-            allDay: false
+        // Add each selected slot as an event
+        selectedSlots.forEach(slot => {
+            calendar.addEvent({
+                title: username,
+                start: `${selectedDate}T${slot.start}`,
+                end: `${selectedDate}T${slot.end}`,
+                allDay: false
+            });
         });
 
         // Clear inputs
@@ -95,25 +111,15 @@ document.addEventListener('DOMContentLoaded', function () {
         phoneInput.value = '';
         phoneInput.classList.remove('is-invalid');
 
-        selectedStartTime = null;
-        selectedEndTime = null;
+        selectedSlots = [];
 
-        document.querySelectorAll('.slot-btn')
-            .forEach(b => b.classList.remove('active'));
-
-        // Hide modal
-        const myModalEl = document.getElementById('myModal');
-        const modalInstance = bootstrap.Modal.getInstance(myModalEl);
-        modalInstance.hide();
-    });
-
-});
-
-document.querySelectorAll('.slot-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
         document.querySelectorAll('.slot-btn')
             .forEach(b => b.classList.remove('selected'));
 
-        btn.classList.add('selected');
+        // Hide modal
+        const modalEl = document.getElementById('myModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+        modalInstance.hide();
     });
+
 });
