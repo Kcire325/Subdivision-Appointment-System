@@ -147,14 +147,9 @@ body {
     width: 100%;              /* FIX 1 */
 }
 
-
-
-
 .main-content {
     flex: 1;
     padding: 30px;
-    background: #f3f5ff;
-    
 }
 
 /* Card container */
@@ -169,14 +164,16 @@ body {
 }
 
 /* Header */
-.card-header {
-    background: #cfd7ff;
+.page-header {
+     background: #dbe2ff;
     color: white;
     text-align: center;
     padding: 15px;
     font-size: 20px;
     font-weight: 600;
+    margin-bottom: 20px;
 }
+
 
 /* Body */
 .card-body {
