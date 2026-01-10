@@ -102,10 +102,9 @@
                 <!-- DATE AND TIME -->
                 <div class="card-body facility">
                     <div class="row row-cols-1 row-cols-md-4 g-4">
-                        <div class="col chapel" >
-                            <a href="chapel.html" class="card-link" data-bs-toggle="collapse" 
-                    data-bs-target="#calendarCollapse" 
-                    aria-expanded="false">
+                        <div class="col chapel">
+                            <a href="chapel.html" class="card-link" data-bs-toggle="collapse"
+                                data-bs-target="#calendarCollapse" aria-expanded="false">
                                 <div class="card h-100">
                                     <img src="../asset/chapel.png" class="card-img-top" alt="chapel">
                                     <div class="card-body content">
@@ -170,16 +169,20 @@
 
 
                 <div class="collapse mt-3" id="calendarCollapse">
-                <div class="card shadow">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Event Schedule</h5>
-                        <button type="button" class="btn-close btn-close-white" id="closeCalendarBtn"></button>
-                    </div>
-                    <div class="card-body">
-                        <div id="calendar"></div>
+                    <div class="card shadow">
+                        <div
+                            class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Event Schedule</h5>
+
+                        </div>
+
+                        <div class="card-body">
+                            <div class="calendar-wrapper">
+                                <div id="calendar"></div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
                 <!-- Modal -->
                 <form method="post">
