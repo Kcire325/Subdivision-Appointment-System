@@ -45,13 +45,13 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                 <!-- Menu List -->
                 <ul class="menu-list">
                     <li class="menu-item">
-                        <a href="#" class="menu-link active">
+                        <a href="../home/home.php" class="menu-link active">
                             <img src="../asset/home.png" alt="Home Icon" class="menu-icon">
                             <span class="menu-label">Home</span>
                         </a>
                     </li>
                     <li class="menu-item">
-                        <a href="#" class="menu-link">
+                        <a href="/Subdivision-Appointment-System/resident-side/make-reservation.php" class="menu-link">
                             <img src="../asset/makeareservation.png" alt="Make a Reservation Icon" class="menu-icon">
                             <span class="menu-label">Make a Reservation</span>
                         </a>
