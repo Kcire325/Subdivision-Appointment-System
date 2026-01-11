@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="test.css">
+    <link rel="stylesheet" href="../test/test.css">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- FullCalendar CSS -->
@@ -25,7 +25,7 @@
         <!-- SIDEBAR -->
         <aside class="sidebar">
             <header class="sidebar-header">
-                <img src="/asset/logo.png" alt="Header Logo" class="header-logo">
+                <img src="../asset/logo.png" alt="Header Logo" class="header-logo">
                 <button class="sidebar-toggle">
                     <span class="material-symbols-outlined">
                         chevron_left
@@ -37,31 +37,31 @@
                 <ul class="menu-list">
                     <li class="menu-item">
                         <a href="#" class="menu-link active">
-                            <img src="/asset/home.png" alt="Home Icon" class="menu-icon">
+                            <img src="../asset/home.png" alt="Home Icon" class="menu-icon">
                             <span class="menu-label">Home</span>
                         </a>
                     </li>
                     <li class="menu-item">
                         <a href="#" class="menu-link">
-                            <img src="/asset/makeareservation.png" alt="Make a Reservation Icon" class="menu-icon">
+                            <img src="../asset/makeareservation.png" alt="Make a Reservation Icon" class="menu-icon">
                             <span class="menu-label">Make a Reservation</span>
                         </a>
                     </li>
                     <li class="menu-item">
                         <a href="#" class="menu-link">
-                            <img src="/asset/reservations.png" alt="Reservations Icon" class="menu-icon">
+                            <img src="../asset/reservations.png" alt="Reservations Icon" class="menu-icon">
                             <span class="menu-label">Reservations</span>
                         </a>
                     </li>
                     <li class="menu-item">
                         <a href="#" class="menu-link">
-                            <img src="/asset/bell.png" alt="My Balance Icon" class="menu-icon">
+                            <img src="../asset/bell.png" alt="My Balance Icon" class="menu-icon">
                             <span class="menu-label">My Balance</span>
                         </a>
                     </li>
                     <li class="menu-item">
                         <a href="#" class="menu-link">
-                            <img src="/asset/profile.png" alt="My Account Icon" class="menu-icon">
+                            <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
                             <span class="menu-label">My Account</span>
                         </a>
                     </li>
@@ -78,9 +78,9 @@
                 <!-- PROGRESS BAR -->
                 <div class="container">
                     <div class="steps">
-                        <span class="circle active"><img src="/asset/facility.png"></span>
-                        <span class="circle"><img src="/asset/date-time.png"></span>
-                        <span class="circle"><img src="/asset/payment.png"></span>
+                        <span class="circle active"><img src="../asset/facility.png"></span>
+                        <span class="circle"><img src="../asset/date-time.png"></span>
+                        <span class="circle"><img src="../asset/payment.png"></span>
                         <div class="progress-bar">
                             <span class="indicator"></span>
                         </div>
@@ -286,9 +286,9 @@
     <!-- Bootstrap 5 JS (with Popper included) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- JS -->
-    <script src="/test/javascript/calendar.js"></script>
-    <script src="/test/javascript/sidebar.js"></script>
-    <script src="/test/javascript/progress-btn.js"></script>
+    <script src="../test/javascript/calendar.js"></script>
+    <script src="../test/javascript/sidebar.js"></script>
+    <script src="../test/javascript/progress-btn.js"></script>
 
 </body>
 
