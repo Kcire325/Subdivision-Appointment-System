@@ -29,11 +29,11 @@ $result = $conn->query($sql);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Google Material Symbols -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="../resident-side/make-reservation.css">
+    <link rel="stylesheet" href="admin.css">
 
 </head>
 <body>
-<div class="app-layout"
+<div class="app-layout">
     <!-- SIDEBAR -->
     <aside class="sidebar">
         <header class="sidebar-header">
