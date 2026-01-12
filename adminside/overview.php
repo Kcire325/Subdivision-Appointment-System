@@ -16,7 +16,7 @@ if ($conn->connect_error) {
 }
 
 // Fetch only active residents from database - Query the 'users' table
-$sql = "SELECT UserID, GeneratedID, Role, FirstName, LastName, Status FROM users WHERE Role = 'Resident' AND Status = 'Active' ORDER BY UserID ASC";
+$sql = "SELECT user_id, GeneratedID, Role, FirstName, LastName, Status FROM users WHERE Role = 'Resident' AND Status = 'Active' ORDER BY user_id ASC";
 $result = $conn->query($sql);
 ?>
 <!DOCTYPE html>
@@ -55,11 +55,11 @@ $result = $conn->query($sql);
                 <li class="menu-item">
                     <a href="reserverequests.php" class="menu-link">
                         <img src="../asset/makeareservation.png" alt="Make a Reservation Icon" class="menu-icon">
-                        <span class="menu-label">View Requests</span>
+                        <span class="menu-label">Requests</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="#" class="menu-link">
+                    <a href="reservations.php" class="menu-link">
                         <img src="../asset/reservations.png" alt="Reservations Icon" class="menu-icon">
                         <span class="menu-label">Reservations</span>
                     </a>
@@ -113,7 +113,7 @@ $result = $conn->query($sql);
                             <tbody>
                                 <?php while($user = $result->fetch_assoc()): ?>
                                     <tr>
-                                        <td><?php echo $user['UserID']; ?></td>
+                                        <td><?php echo $user['user_id']; ?></td>
                                         <td><?php echo $user['GeneratedID']; ?></td>
                                         <td><?php echo $user['FirstName']; ?></td>
                                         <td><?php echo $user['LastName']; ?></td>
