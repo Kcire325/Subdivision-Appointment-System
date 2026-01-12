@@ -1,223 +1,175 @@
 <?php
 session_start();
 
-// Check if user is logged in and is an Admin
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Admin') {
-    header("Location: ../login/login.php");
-    exit();
-}
-
 // Database connection
 $conn = new mysqli("localhost", "root", "", "facilityreservationsystem");
 
-// Check connection
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Fetch reservation requests with user details
-$sql = "SELECT 
-            r.ReservationID,
-            r.UserID,
-            u.GeneratedID,
-            u.FirstName,
-            u.LastName,
-            r.FacilityID,
-            r.ReservationDate,
-            r.StartTime,
-            r.EndTime,
-            r.Purpose,
-            r.Status,
-            r.RequestDate
-        FROM reservations r
-        INNER JOIN users u ON r.UserID = u.UserID
-        WHERE r.Status = 'Pending'
-        ORDER BY r.RequestDate DESC, r.ReservationDate ASC";
+$message = "";
 
-$result = $conn->query($sql);
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['update_users'])) {
+    $updates = 0;
+    
+    foreach ($_POST['user_assignments'] as $reservation_id => $user_id) {
+        $reservation_id = intval($reservation_id);
+        $user_id = intval($user_id);
+        
+        $update_sql = "UPDATE reservations SET user_id = $user_id WHERE id = $reservation_id";
+        if ($conn->query($update_sql)) {
+            $updates++;
+        }
+    }
+    
+    $message = "✓ Successfully updated $updates reservation(s) with correct user information!";
+}
+
+// Get all pending reservations
+$reservations_sql = "SELECT 
+                        r.id,
+                        r.user_id,
+                        r.facility_name,
+                        r.phone,
+                        r.event_start_date,
+                        r.event_end_date,
+                        r.time_start,
+                        r.time_end,
+                        u.FirstName,
+                        u.LastName
+                    FROM reservations r
+                    LEFT JOIN users u ON r.user_id = u.UserID
+                    WHERE LOWER(r.status) = 'pending'
+                    ORDER BY r.id";
+$reservations = $conn->query($reservations_sql);
+
+// Get only users with Resident role
+$users_sql = "SELECT UserID, GeneratedID, FirstName, LastName FROM users WHERE Role = 'Resident' ORDER BY FirstName";
+$users = $conn->query($users_sql);
+$users_array = [];
+while ($user = $users->fetch_assoc()) {
+    $users_array[] = $user;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin - Reservation Requests</title>
-    <!-- Bootstrap CSS -->
+    <title>Assign Correct Users to Reservations</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Google Material Symbols -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
-    <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-<div class="app-layout">
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <header class="sidebar-header">
-            <img src="../asset/logo.png" alt="Header Logo" class="header-logo">
-            <button class="sidebar-toggle">
-                <span class="material-symbols-outlined">chevron_left</span>
-            </button>
-        </header>
-
-        <div class="sidebar-content">
-            <!-- Menu List -->
-            <ul class="menu-list">
-                <li class="menu-item">
-                    <a href="overview.php" class="menu-link">
-                        <img src="../asset/home.png" alt="Home Icon" class="menu-icon">
-                        <span class="menu-label">Overview</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="reserverequests.php" class="menu-link active">
-                        <img src="../asset/makeareservation.png" alt="View Requests Icon" class="menu-icon">
-                        <span class="menu-label">View Requests</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
-                        <img src="../asset/reservations.png" alt="Active Residents Icon" class="menu-icon">
-                        <span class="menu-label">Reservations</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
-                        <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
-                        <span class="menu-label">My Account</span>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="#" class="menu-link">
-                        <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
-                        <span class="menu-label">Create Account</span>
-                    </a>
-                </li>
-            </ul>
+<div class="container mt-5">
+    <h1 class="mb-4">👥 Assign Correct Users to Reservations</h1>
+    
+    <?php if ($message): ?>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <h5><?php echo $message; ?></h5>
+            <a href="reserverequests.php" class="btn btn-primary mt-2">✓ View Updated Reservations</a>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-    </aside>
+    <?php endif; ?>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
-        <div class="reservation-card">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h1>Reservation Requests</h1>
-                    <p class="text-muted">Logged in as: <?php echo $_SESSION['firstName'] . ' ' . $_SESSION['lastName']; ?> (Admin)</p>
-                </div>
-                <a href="logout.php" class="btn btn-danger">Logout</a>
-            </div>
-
-            <?php if ($result->num_rows > 0): ?>
-                <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Pending Requests: <?php echo $result->num_rows; ?></h5>
-                        <div>
-                            <span class="badge bg-warning text-dark">Pending Approval</span>
-                        </div>
-                    </div>
-                    <div class="card-body p-0">
-                        <div class="table-responsive">
-                            <table class="table table-hover table-striped mb-0">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Request ID</th>
-                                        <th>Resident ID</th>
-                                        <th>Resident Name</th>
-                                        <th>Facility ID</th>
-                                        <th>Date</th>
-                                        <th>Time</th>
-                                        <th>Purpose</th>
-                                        <th>Request Date</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php while($request = $result->fetch_assoc()): ?>
-                                        <tr>
-                                            <td><?php echo $request['ReservationID']; ?></td>
-                                            <td><?php echo $request['GeneratedID']; ?></td>
-                                            <td><?php echo $request['FirstName'] . ' ' . $request['LastName']; ?></td>
-                                            <td><?php echo $request['FacilityID']; ?></td>
-                                            <td><?php echo date('M d, Y', strtotime($request['ReservationDate'])); ?></td>
-                                            <td>
-                                                <?php 
-                                                    echo date('g:i A', strtotime($request['StartTime'])) . ' - ' . 
-                                                         date('g:i A', strtotime($request['EndTime'])); 
-                                                ?>
-                                            </td>
-                                            <td><?php echo htmlspecialchars($request['Purpose']); ?></td>
-                                            <td><?php echo date('M d, Y', strtotime($request['RequestDate'])); ?></td>
-                                            <td>
-                                                <span class="badge bg-warning text-dark">
-                                                    <?php echo $request['Status']; ?>
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group" role="group">
-                                                    <button type="button" class="btn btn-sm btn-success" 
-                                                            onclick="updateStatus(<?php echo $request['ReservationID']; ?>, 'Approved')">
-                                                        <span class="material-symbols-outlined" style="font-size: 16px;">check</span>
-                                                        Approve
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-danger" 
-                                                            onclick="updateStatus(<?php echo $request['ReservationID']; ?>, 'Rejected')">
-                                                        <span class="material-symbols-outlined" style="font-size: 16px;">close</span>
-                                                        Reject
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    <?php endwhile; ?>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            <?php else: ?>
-                <div class="alert alert-info">
-                    <span class="material-symbols-outlined" style="vertical-align: middle;">info</span>
-                    No pending reservation requests at this time.
-                </div>
-            <?php endif; ?>
-        </div>
+    <div class="alert alert-info">
+        <strong>Instructions:</strong> For each reservation below, select the correct user who made the reservation based on the phone number or other details.
     </div>
+
+    <form method="POST">
+        <div class="table-responsive">
+            <table class="table table-bordered">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Reservation ID</th>
+                        <th>Facility</th>
+                        <th>Phone</th>
+                        <th>Event Date</th>
+                        <th>Time</th>
+                        <th>Current User</th>
+                        <th>Select Correct User</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php while ($res = $reservations->fetch_assoc()): ?>
+                    <tr>
+                        <td><?php echo $res['id']; ?></td>
+                        <td><?php echo htmlspecialchars($res['facility_name']); ?></td>
+                        <td><strong><?php echo htmlspecialchars($res['phone']); ?></strong></td>
+                        <td>
+                            <?php
+                                echo date('M d, Y', strtotime($res['event_start_date']));
+                                if ($res['event_start_date'] != $res['event_end_date']) {
+                                    echo ' - ' . date('M d, Y', strtotime($res['event_end_date']));
+                                }
+                            ?>
+                        </td>
+                        <td>
+                            <?php
+                                echo date('g:i A', strtotime($res['time_start'])) .
+                                     ' - ' .
+                                     date('g:i A', strtotime($res['time_end']));
+                            ?>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">
+                                <?php echo htmlspecialchars($res['FirstName'] . ' ' . $res['LastName']); ?>
+                            </span>
+                        </td>
+                        <td>
+                            <select name="user_assignments[<?php echo $res['id']; ?>]" 
+                                    class="form-select" required>
+                                <?php foreach ($users_array as $user): ?>
+                                <option value="<?php echo $user['UserID']; ?>"
+                                        <?php echo ($user['UserID'] == $res['user_id']) ? 'selected' : ''; ?>>
+                                    <?php echo htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']); ?>
+                                    (ID: <?php echo $user['GeneratedID']; ?>)
+                                </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </td>
+                    </tr>
+                    <?php endwhile; ?>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5>Available Residents</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <?php foreach ($users_array as $user): ?>
+                    <div class="col-md-4 mb-3">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="card-title"><?php echo htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']); ?></h6>
+                                <p class="card-text mb-0">
+                                    <small>
+                                        <strong>User ID:</strong> <?php echo $user['UserID']; ?><br>
+                                        <strong>Generated ID:</strong> <?php echo $user['GeneratedID']; ?>
+                                    </small>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex gap-2 mt-4">
+            <button type="submit" name="update_users" class="btn btn-success btn-lg">
+                💾 Update All Reservations
+            </button>
+            <a href="reserverequests.php" class="btn btn-secondary btn-lg">Cancel</a>
+        </div>
+    </form>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js" integrity="sha384-I7E8VVD/ismYTF4hNIPjVp/Zjvgyol6VFvRkX/vR+Vc4jQkC+hVqc2pM8ODewa9r" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" integrity="sha384-G/EV+4j2dNv+tEPo3++6LCgdCROaejBqfUeNjuKAiuXbjrxilcCdDz6ZAVfHWe1Y" crossorigin="anonymous"></script>
-<script src="../resident-side/javascript/sidebar.js"></script>
-
-<script>
-function updateStatus(reservationId, newStatus) {
-    if (confirm('Are you sure you want to ' + newStatus.toLowerCase() + ' this reservation request?')) {
-        // Create form data
-        const formData = new FormData();
-        formData.append('reservation_id', reservationId);
-        formData.append('status', newStatus);
-        
-        // Send AJAX request
-        fetch('update_reservation_status.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Reservation request ' + newStatus.toLowerCase() + ' successfully!');
-                location.reload();
-            } else {
-                alert('Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            alert('An error occurred. Please try again.');
-            console.error('Error:', error);
-        });
-    }
-}
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
 <?php
