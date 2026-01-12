@@ -614,6 +614,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
         $('#phone').removeClass('is-invalid');
         $('#phoneFeedback').hide();
     }
+    
     </script>
     
     <!-- Other JS -->
