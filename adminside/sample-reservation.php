@@ -302,9 +302,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
     <!-- Bootstrap 5 JS (with Popper included) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <!-- JS -->
-    <script src="javascript/calendar.js"></script>
-    <script src="javascript/sidebar.js"></script>
-    <script src="javascript/progress-btn.js"></script>
+    <script src="resident-side/javascript/calendar.js"></script>
+    <script src="resident-side/javascript/sidebar.js"></script>
+    <script src="resident-side/javascript/progress-btn.js"></script>
 
 </body>
 
