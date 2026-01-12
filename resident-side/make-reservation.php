@@ -175,22 +175,21 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                     <input type="hidden" id="event_end_date">
                                     <input type="hidden" id="selected_time_start">
                                     <input type="hidden" id="selected_time_end">
+                                    <input type="hidden" id="selected_facility">
                                     
                                     <!-- Selected Date Display -->
                                     <div class="alert alert-info" role="alert">
                                         <strong>Selected Date:</strong> <span id="display_selected_date"></span>
                                     </div>
                                     
-                                    <!-- Facility Name -->
+                                    <!-- Facility Name (Read-only display) -->
                                     <div class="form-group mb-3">
                                         <label for="facility_name">Facility Name: <span class="text-danger">*</span></label>
-                                        <select class="form-control" id="facility_name" required>
-                                            <option value="">Select a facility</option>
-                                            <option value="Chapel">Chapel</option>
-                                            <option value="Basketball Court">Basketball Court</option>
-                                            <option value="Multipurpose Hall">Multipurpose Hall</option>
-                                            <option value="Tennis Court">Tennis Court</option>
-                                        </select>
+                                        <input type="text" class="form-control" id="facility_name" readonly 
+                                               style="background-color: #e9ecef; cursor: not-allowed;">
+                                        <small class="form-text text-muted">
+                                            Please select a facility from the cards above before choosing a date.
+                                        </small>
                                     </div>
 
                                     <!-- Phone Number -->
@@ -299,11 +298,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
     
     <!-- Calendar and Reservation JavaScript -->
     <script>
+    // Global variable to store selected facility
+    var selectedFacility = null;
+    
     $(document).ready(function () {
         // Initialize calendar when page loads
         load_events();
         
-        // Facility card selection
+        // Facility card selection - FIXED
         $('.card-link').on('click', function(e) {
             e.preventDefault();
             
@@ -313,9 +315,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
             // Add selected class to clicked facility
             $(this).parent().addClass('selected');
             
-            // Get facility name and set in modal
-            var facilityName = $(this).data('facility');
-            $('#facility_name').val(facilityName);
+            // Store facility name globally
+            selectedFacility = $(this).data('facility');
+            
+            console.log("Facility selected:", selectedFacility); // Debug log
         });
         
         // Time slot selection handler
@@ -380,8 +383,15 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                     events: response.data || [],
                     height: 600,
                     
-                    // When user selects a date range
+                    // When user selects a date range - FIXED
                     select: function(start, end) {
+                        // Check if facility is selected
+                        if (!selectedFacility) {
+                            alert("Please select a facility first by clicking on one of the facility cards above.");
+                            $('#calendar').fullCalendar('unselect');
+                            return;
+                        }
+                        
                         // Clear previous form data
                         clearModalForm();
                         
@@ -391,6 +401,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                         
                         $("#event_start_date").val(startDate);
                         $("#event_end_date").val(endDate);
+                        
+                        // Set the selected facility in modal
+                        $("#facility_name").val(selectedFacility);
+                        $("#selected_facility").val(selectedFacility);
                         
                         // Display selected date in modal
                         $("#display_selected_date").text(moment(start).format("MMMM DD, YYYY"));
@@ -409,14 +423,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                         eventDetails += "Date: " + moment(event.start).format("MMMM DD, YYYY") + "\n";
                         eventDetails += "Time: " + moment(event.start).format("h:mm A") + " - " + moment(event.end).format("h:mm A") + "\n";
                         eventDetails += "Status: " + event.status.charAt(0).toUpperCase() + event.status.slice(1) + "\n";
-                        
-                        if (event.phone) {
-                            eventDetails += "Phone: " + event.phone + "\n";
-                        }
-                        
-                        if (event.note) {
-                            eventDetails += "Note: " + event.note;
-                        }
                         
                         alert(eventDetails);
                     },
@@ -449,6 +455,12 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                     height: 600,
                     
                     select: function(start, end) {
+                        if (!selectedFacility) {
+                            alert("Please select a facility first by clicking on one of the facility cards above.");
+                            $('#calendar').fullCalendar('unselect');
+                            return;
+                        }
+                        
                         clearModalForm();
                         
                         var startDate = moment(start).format("YYYY-MM-DD");
@@ -456,6 +468,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                         
                         $("#event_start_date").val(startDate);
                         $("#event_end_date").val(endDate);
+                        $("#facility_name").val(selectedFacility);
+                        $("#selected_facility").val(selectedFacility);
                         $("#display_selected_date").text(moment(start).format("MMMM DD, YYYY"));
                         
                         $("#myModal").modal("show");
@@ -467,11 +481,11 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
     }
 
     /**
-     * Save reservation to database
+     * Save reservation to database - FIXED
      */
     function save_event() {
-        // Get form values
-        var facilityName = $("#facility_name").val().trim();
+        // Get form values - use the stored facility value
+        var facilityName = $("#selected_facility").val() || selectedFacility;
         var phone = $("#phone").val().trim();
         var startDate = $("#event_start_date").val();
         var endDate = $("#event_end_date").val();
@@ -481,8 +495,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
         
         // Validate required fields
         if (!facilityName) {
-            alert("Please select a facility.");
-            $("#facility_name").focus();
+            alert("Please select a facility from the cards above.");
             return;
         }
         
@@ -537,8 +550,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                     // Reload calendar to show new event
                     load_events();
                     
-                    // Clear form
+                    // Clear form and selection
                     clearModalForm();
+                    selectedFacility = null;
+                    $('.col').removeClass('selected');
                 } else {
                     alert(response.msg || "Error saving reservation. Please try again.");
                 }
@@ -571,6 +586,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
      */
     function clearModalForm() {
         $('#facility_name').val('');
+        $('#selected_facility').val('');
         $('#phone').val('');
         $('#event_note').val('');
         $('#selected_time_start').val('');
@@ -578,9 +594,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
         
         // Reset time slot buttons
         $('.slot-btn').removeClass('selected');
-        
-        // Reset facility selection
-        $('.col').removeClass('selected');
         
         // Remove validation classes
         $('#phone').removeClass('is-invalid');
