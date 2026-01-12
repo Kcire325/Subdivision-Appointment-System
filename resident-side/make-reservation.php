@@ -319,6 +319,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
             selectedFacility = $(this).data('facility');
             
             console.log("Facility selected:", selectedFacility); // Debug log
+            
+            // Reload calendar to show only this facility's events
+            load_events();
         });
         
         // Time slot selection handler
@@ -369,6 +372,20 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                 // Destroy existing calendar instance
                 $('#calendar').fullCalendar('destroy');
 
+                // Filter events based on selected facility
+                var filteredEvents = [];
+                if (response.data && response.data.length > 0) {
+                    if (selectedFacility) {
+                        // Show only events for the selected facility
+                        filteredEvents = response.data.filter(function(event) {
+                            return event.title === selectedFacility;
+                        });
+                    } else {
+                        // If no facility selected, show all events
+                        filteredEvents = response.data;
+                    }
+                }
+
                 // Initialize FullCalendar
                 $('#calendar').fullCalendar({
                     header: {
@@ -380,7 +397,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                     selectable: true,
                     selectHelper: true,
                     defaultView: 'month',
-                    events: response.data || [],
+                    events: filteredEvents,
                     height: 600,
                     
                     // When user selects a date range - FIXED
