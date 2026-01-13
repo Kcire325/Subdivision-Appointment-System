@@ -13,7 +13,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style/make-reservation.css">
+    <link rel="stylesheet" href="make-reservation.css">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     
@@ -98,6 +98,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                 <div class="container">
                     <div class="steps">
                         <span class="circle active"><img src="../asset/facility.png" alt="Facility"></span>
+                        
                         <span class="circle"><img src="../asset/date-time.png" alt="Date Time"></span>
                         <span class="circle"><img src="../asset/payment.png" alt="Payment"></span>
                         <div class="progress-bar">

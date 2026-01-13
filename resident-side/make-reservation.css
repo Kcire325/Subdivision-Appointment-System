@@ -131,7 +131,7 @@ body {
 
 .menu-list .menu-link:is(:hover, .active) {
     color: white;
-    background-color: var(--color-hover-primary);
+    background-color: black;
 }
 
 .menu-list .menu-item .menu-link:hover img {
@@ -488,4 +488,4 @@ body {
     .slots-container {
         grid-template-columns: repeat(2, 1fr);
     }
-}
+} */
