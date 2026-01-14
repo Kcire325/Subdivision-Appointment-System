@@ -54,6 +54,11 @@ body {
     border-radius: 50%;
 }
 
+.sidebar.collapsed .menu-link .menu-label {
+    opacity: 0;
+    pointer-events: none;
+}
+
 .sidebar.collapsed .sidebar-header .header-logo {
     opacity: 0;
     pointer-events: none;
