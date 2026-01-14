@@ -374,7 +374,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                         <span class="gcash-number">09123456789</span>
                                         <strong>** T**</strong> and upload a screenshot of your proof of payment.
                                     </p>
-a
                                     <div class="upload-area" id="uploadArea">
                                         <div class="upload-icon">
                                             <svg width="60" height="60" viewBox="0 0 24 24" fill="none"
