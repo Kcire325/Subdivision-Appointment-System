@@ -1,12 +1,6 @@
 <?php
 session_start();
 
-// Check if user is logged in and is an Admin
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Admin') {
-    header("Location: ../login/login.php");
-    exit();
-}
-
 // Database connection
 $conn = new mysqli("localhost", "root", "", "facilityreservationsystem");
 
@@ -16,61 +10,91 @@ if ($conn->connect_error) {
 
 $message = "";
 
-// Handle approve / reject actions
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
-    if (isset($_POST['approve'])) {
-        $id = intval($_POST['approve']);
-        $conn->query("UPDATE reservations SET status = 'approved', updated_at = NOW() WHERE id = $id");
-        $message = "Reservation #$id approved.";
-    }
-
-    if (isset($_POST['reject'])) {
-        $id = intval($_POST['reject']);
-        $conn->query("UPDATE reservations SET status = 'rejected', updated_at = NOW() WHERE id = $id");
-        $message = "Reservation #$id rejected.";
+// ----------------------
+// NEW: Handle Approve/Reject buttons
+// ----------------------
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (isset($_POST['approve_reservation']) || isset($_POST['reject_reservation'])) {
+        $reservation_id = intval($_POST['reservation_id']);
+        $new_status = isset($_POST['approve_reservation']) ? 'approved' : 'rejected';
+        
+        $stmt = $conn->prepare("UPDATE reservations SET status = ? WHERE id = ?");
+        $stmt->bind_param("si", $new_status, $reservation_id);
+        if ($stmt->execute()) {
+            $message = "Reservation #$reservation_id has been marked as " . ucfirst($new_status) . ".";
+        } else {
+            $message = "Error updating reservation: " . $stmt->error;
+        }
+        $stmt->close();
     }
 }
 
-// Get ONLY pending reservations
-$reservations_sql = "
-    SELECT 
-        r.id,
-        r.user_id,
-        r.facility_name,
-        r.phone,
-        r.event_start_date,
-        r.event_end_date,
-        r.time_start,
-        r.time_end,
-        r.status,
-        u.FirstName,
-        u.LastName
-    FROM reservations r
-    LEFT JOIN users u ON r.user_id = u.user_id
-    WHERE r.status = 'pending'
-    ORDER BY r.id DESC
-";
+// ----------------------
+// EXISTING: Handle hide reservation (optional, still works)
+// ----------------------
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_reservation'])) {
+    $reservation_id = intval($_POST['reservation_id']);
+    
+    if (!isset($_SESSION['hidden_reservations'])) {
+        $_SESSION['hidden_reservations'] = [];
+    }
+    if (!in_array($reservation_id, $_SESSION['hidden_reservations'])) {
+        $_SESSION['hidden_reservations'][] = $reservation_id;
+    }
+    $message = "Reservation removed from view.";
+}
+// Build the WHERE clause to exclude hidden reservations
+$hidden_ids = isset($_SESSION['hidden_reservations']) ? $_SESSION['hidden_reservations'] : [];
+$hidden_clause = "";
+if (!empty($hidden_ids)) {
+    $hidden_ids_str = implode(',', array_map('intval', $hidden_ids));
+    $hidden_clause = " AND r.id NOT IN ($hidden_ids_str)";
+}
 
-$reservations = $conn->query($reservations_sql);
+// Check if "notes" column exists
+$notes_column_exists = false;
+$result = $conn->query("SHOW COLUMNS FROM reservations LIKE 'notes'");
+if ($result && $result->num_rows > 0) {
+    $notes_column_exists = true;
+}
+
+// Fetch ONLY pending reservations
+$res_sql = "SELECT
+                r.id,
+                r.facility_name,
+                r.phone,
+                r.event_start_date,
+                r.event_end_date,
+                r.time_start,
+                r.time_end,
+                r.status,
+                " . ($notes_column_exists ? "r.notes," : "") . "
+                u.FirstName,
+                u.LastName
+            FROM reservations r
+            LEFT JOIN users u ON r.user_id = u.user_id
+            WHERE LOWER(r.status) = 'pending'
+            $hidden_clause
+            ORDER BY r.id DESC";
+
+$reservations = $conn->query($res_sql);
+
+if (!$reservations) {
+    die("Database query failed: " . $conn->error);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reservation Requests - Admin</title>
-
-    <!-- Bootstrap -->
+    <title>Pending Reservations</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Google Icons -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-
+    <link rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-
 <div class="app-layout">
 
     <!-- SIDEBAR -->
@@ -83,34 +107,35 @@ $reservations = $conn->query($reservations_sql);
         </header>
 
         <div class="sidebar-content">
+            <!-- Menu List -->
             <ul class="menu-list">
                 <li class="menu-item">
                     <a href="overview.php" class="menu-link">
-                        <img src="../asset/home.png" class="menu-icon">
+                        <img src="../asset/home.png" alt="Home Icon" class="menu-icon">
                         <span class="menu-label">Overview</span>
                     </a>
                 </li>
-                <li class="menu-item active">
+                <li class="menu-item">
                     <a href="reserverequests.php" class="menu-link">
-                        <img src="../asset/makeareservation.png" class="menu-icon">
+                        <img src="../asset/makeareservation.png" alt="Make a Reservation Icon" class="menu-icon">
                         <span class="menu-label">Requests</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="reservations.php" class="menu-link">
-                        <img src="../asset/reservations.png" class="menu-icon">
+                        <img src="../asset/reservations.png" alt="Reservations Icon" class="menu-icon">
                         <span class="menu-label">Reservations</span>
                     </a>
                 </li>
                 <li class="menu-item">
                     <a href="#" class="menu-link">
-                        <img src="../asset/profile.png" class="menu-icon">
+                        <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
                         <span class="menu-label">My Account</span>
                     </a>
                 </li>
                 <li class="menu-item">
-                    <a href="createaccount.php" class="menu-link">
-                        <img src="../asset/profile.png" class="menu-icon">
+                    <a href="create-account/create-account.php" class="menu-link">
+                        <img src="../asset/profile.png" alt="Create Account Icon" class="menu-icon">
                         <span class="menu-label">Create Account</span>
                     </a>
                 </li>
@@ -118,110 +143,100 @@ $reservations = $conn->query($reservations_sql);
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
+  <!-- MAIN CONTENT -->
     <div class="main-content">
+        <div class="reservation-card p-4" style="background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <div class="page-header mb-4" style="font-size: 2rem; font-weight: 600; border-bottom: 2px solid #ddd; padding-bottom: 15px;">
+                Pending Reservations
+            </div>
 
-        <div class="reservation-card">
+            <div class="card-body">
 
-            <h1 class="mb-4">Pending Reservation Requests</h1>
-
-            <?php if ($message): ?>
-                <div class="alert alert-info alert-dismissible fade show">
-                    <h5><?= $message ?></h5>
+                <?php if ($message): ?>
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <?php echo $message; ?>
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-            <?php endif; ?>
+                <?php endif; ?>
 
-            <div class="alert alert-warning">
-                Only <strong>pending</strong> reservations are displayed here.
-            </div>
-
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Resident</th>
-                            <th>Facility</th>
-                            <th>Phone</th>
-                            <th>Event Date</th>
-                            <th>Time</th>
-                            <th>Status</th>
-                            <th width="200">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-                        <?php if ($reservations->num_rows == 0): ?>
+                <div class="table-responsive mt-3">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-dark">
                             <tr>
-                                <td colspan="8" class="text-center text-muted">
-                                    No pending reservations found.
-                                </td>
-                            </tr>
-                        <?php endif; ?>
-
-                        <?php while ($res = $reservations->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= $res['id'] ?></td>
-
-                            <td><?= htmlspecialchars($res['FirstName'] . " " . $res['LastName']) ?></td>
-
-                            <td><?= htmlspecialchars($res['facility_name']) ?></td>
-
-                            <td><strong><?= htmlspecialchars($res['phone']) ?></strong></td>
-
-                            <td>
-                                <?= date('M d, Y', strtotime($res['event_start_date'])) ?>
-                                <?php if ($res['event_start_date'] != $res['event_end_date']): ?>
-                                    - <?= date('M d, Y', strtotime($res['event_end_date'])) ?>
+                                <th>ID</th>
+                                <th>Facility</th>
+                                <th>Phone</th>
+                                <th>Event Date</th>
+                                <th>Time</th>
+                                <th>User</th>
+                                <?php if ($notes_column_exists): ?>
+                                <th>Notes</th>
                                 <?php endif; ?>
-                            </td>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if ($reservations->num_rows > 0): ?>
+                                <?php while ($row = $reservations->fetch_assoc()): ?>
+                                <tr>
+                                    <td><?php echo $row['id']; ?></td>
+                                    <td><?php echo htmlspecialchars($row['facility_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['phone']); ?></td>
+                                    <td>
+                                        <?php
+                                        echo date('M d, Y', strtotime($row['event_start_date']));
+                                        if ($row['event_start_date'] != $row['event_end_date']) {
+                                            echo " - " . date('M d, Y', strtotime($row['event_end_date']));
+                                        }
+                                        ?>
+                                    </td>
+                                    <td>
+                                        <?php
+                                        echo date('g:i A', strtotime($row['time_start'])) . " - " .
+                                             date('g:i A', strtotime($row['time_end']));
+                                        ?>
+                                    </td>
+                                    <td><?php echo $row['FirstName'] . " " . $row['LastName']; ?></td>
+                                    <?php if ($notes_column_exists): ?>
+                                    <td>
+                                        <?php echo !empty($row['notes']) ? htmlspecialchars($row['notes']) : "<span class='text-muted'>No notes</span>"; ?>
+                                    </td>
+                                    <?php endif; ?>
+                                    <td><span class="badge bg-warning text-dark"><?php echo ucfirst($row['status']); ?></span></td>
+                                    <td>
+                                        <form method="POST" class="d-inline">
+                                            <input type="hidden" name="reservation_id" value="<?php echo $row['id']; ?>">
+                                            <button type="submit" name="approve_reservation" class="btn btn-success btn-sm mb-1">
+                                                Approve
+                                            </button>
+                                            <button type="submit" name="reject_reservation" class="btn btn-danger btn-sm mb-1">
+                                                Reject
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <?php endwhile; ?>
+                            <?php else: ?>
+                                <tr>
+                                    <td colspan="<?php echo $notes_column_exists ? 9 : 8; ?>" class="text-center py-5">
+                                        <div class="alert alert-info mb-0">
+                                            <h5 class="alert-heading mb-3">No pending reservations!</h5>
+                                            <p>All reservations have been approved or rejected.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
 
-                            <td>
-                                <?= date('g:i A', strtotime($res['time_start'])) ?>
-                                -
-                                <?= date('g:i A', strtotime($res['time_end'])) ?>
-                            </td>
-
-                            <td>
-                                <span class="badge bg-warning text-dark">Pending</span>
-                            </td>
-
-                            <td>
-                                <form method="POST" class="d-flex gap-2">
-
-                                    <button type="submit"
-                                            name="approve"
-                                            value="<?= $res['id'] ?>"
-                                            class="btn btn-success btn-sm">
-                                            Approve
-                                    </button>
-
-                                    <button type="submit"
-                                            name="reject"
-                                            value="<?= $res['id'] ?>"
-                                            class="btn btn-danger btn-sm">
-                                            Reject
-                                    </button>
-
-                                </form>
-                            </td>
-
-                        </tr>
-                        <?php endwhile; ?>
-
-                    </tbody>
-                </table>
             </div>
-
         </div>
-
     </div>
-
-</div>
+</div> <!-- END app-layout -->
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../resident-side/javascript/sidebar.js"></script>
 
 </body>
 </html>

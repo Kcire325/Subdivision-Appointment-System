@@ -10,16 +10,17 @@ if ($conn->connect_error) {
 
 $message = "";
 
-// Handle status update to COMPLETED
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['complete_reservation'])) {
+// Handle soft delete (mark as completed to hide from interface)
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_reservation'])) {
     $reservation_id = intval($_POST['reservation_id']);
 
-    $update_sql = "UPDATE reservations SET status = 'Completed' WHERE id = $reservation_id";
+    $update_sql = "UPDATE reservations SET status = 'completed' WHERE id = $reservation_id";
     if ($conn->query($update_sql)) {
-            }
+        $message = "Reservation deleted successfully!";
+    }
 }
 
-// Fetch ALL approved reservations
+// Fetch ONLY approved and rejected reservations (exclude completed and pending)
 $res_sql = "SELECT
                 r.id,
                 r.facility_name,
@@ -33,8 +34,8 @@ $res_sql = "SELECT
                 u.LastName
             FROM reservations r
             LEFT JOIN users u ON r.user_id = u.user_id
-            WHERE LOWER(r.status) = 'approved'
-            ORDER BY r.id DESC";
+            WHERE LOWER(r.status) IN ('approved', 'rejected')
+            ORDER BY r.status DESC, r.id DESC";
 
 $reservations = $conn->query($res_sql);
 ?>
@@ -92,7 +93,7 @@ $reservations = $conn->query($res_sql);
                         </a>
                     </li>
                     <li class="menu-item">
-                        <a href="#" class="menu-link">
+                        <a href="create-account/create-account.php" class="menu-link">
                             <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
                             <span class="menu-label">Create Account</span>
                         </a>
@@ -104,7 +105,7 @@ $reservations = $conn->query($res_sql);
         <!-- MAIN CONTENT -->
     <div class="main-content">
         <div class="reservation-card">
-            <h1 class="mb-4">📋 Approved Reservations</h1>
+            <h1 class="mb-4">Approved & Rejected Reservations</h1>
             <div class="container mt-5">
                 
 
@@ -118,8 +119,8 @@ $reservations = $conn->query($res_sql);
                 <?php endif; ?>
 
                 <div class="alert alert-info">
-                    These are all reservations that have been <strong>approved</strong>.
-                    You may mark them as <strong>Completed</strong> once the event has finished.
+                    These are all reservations that have been <strong>approved</strong> or <strong>rejected</strong>.
+                    You may delete them to remove from this list.
                 </div>
 
                 <div class="table-responsive mt-3">
@@ -133,7 +134,7 @@ $reservations = $conn->query($res_sql);
                                 <th>Time</th>
                                 <th>User</th>
                                 <th>Status</th>
-                                <th>Update</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -170,17 +171,23 @@ $reservations = $conn->query($res_sql);
                                 </td>
 
                                 <td>
-                                    <span class="badge bg-success">
-                                        <?php echo ucfirst($row['status']); ?>
-                                    </span>
+                                    <?php if (strtolower($row['status']) === 'approved'): ?>
+                                        <span class="badge bg-success">
+                                            <?php echo ucfirst($row['status']); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge bg-danger">
+                                            <?php echo ucfirst($row['status']); ?>
+                                        </span>
+                                    <?php endif; ?>
                                 </td>
 
                                 <td>
-                                    <form method="POST" class="d-flex gap-2">
+                                    <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this reservation?');">
                                         <input type="hidden" name="reservation_id" value="<?php echo $row['id']; ?>">
-                                        <button type="submit" name="complete_reservation"
-                                            class="btn btn-primary btn-sm">
-                                            Mark as Completed
+                                        <button type="submit" name="delete_reservation" class="btn btn-danger btn-sm" title="Delete Reservation">
+                                            <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">delete</span>
+                                            Delete
                                         </button>
                                     </form>
                                 </td>

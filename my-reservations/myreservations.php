@@ -20,15 +20,15 @@ try {
     die("Database connection failed: " . $e->getMessage());
 }
 
-// Get current user's reservations (excluding completed)
+// Get current user's reservations (include pending, approved, rejected - exclude completed if you want)
 $user_id = $_SESSION['user_id'];
 
 $query = "SELECT facility_name, event_start_date, time_start, time_end, status, created_at 
           FROM reservations 
           WHERE user_id = :user_id 
-          AND status != 'completed'
-          ORDER BY created_at DESC";
-
+          AND status IN ('approved', 'rejected', 'pending')
+          ORDER BY FIELD(status, 'pending', 'approved', 'rejected'), created_at DESC";
+          
 $stmt = $conn->prepare($query);
 $stmt->execute([':user_id' => $user_id]);
 $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -112,6 +112,10 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
 
             <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    Showing <strong>pending</strong>, <strong>approved</strong>, and <strong>rejected</strong> reservations. Completed reservations are not displayed.
+                </div>
+
                 <div class="table-responsive">
 
                     <table class="table table-hover">
@@ -122,6 +126,7 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <th scope="col">Time Slot</th>
                                 <th scope="col">Status</th>
                                 <th scope="col">Booked On</th>
+                                <th scope="col">Action</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -129,9 +134,7 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <?php foreach ($reservations as $reservation): ?>
                                     <tr>
                                         <td><?php echo htmlspecialchars($reservation['facility_name']); ?></td>
-
                                         <td><?php echo date('F d, Y', strtotime($reservation['event_start_date'])); ?></td>
-
                                         <td>
                                             <?php 
                                                 echo date('g:i A', strtotime($reservation['time_start'])) . 
@@ -139,14 +142,13 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                      date('g:i A', strtotime($reservation['time_end']));
                                             ?>
                                         </td>
-
                                         <td>
                                             <?php 
                                                 $statusClass = match($reservation['status']) {
-                                                    'pending' => 'bg-warning text-dark',
                                                     'approved' => 'bg-success text-white',
                                                     'rejected' => 'bg-danger text-white',
-                                                    'cancelled' => 'bg-secondary text-white',
+                                                    'completed' => 'bg-secondary text-white',
+                                                    'pending' => 'bg-warning text-dark',
                                                     default => 'bg-dark text-white'
                                                 };
                                             ?>
@@ -154,17 +156,18 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 <?php echo ucfirst($reservation['status']); ?>
                                             </span>
                                         </td>
-
                                         <td><?php echo date('M d, Y g:i A', strtotime($reservation['created_at'])); ?></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-danger delete-btn">Delete</button>
+                                        </td>
                                     </tr>
                                 <?php endforeach; ?>
-
                             <?php else: ?>
                                 <tr>
-                                    <td colspan="5" class="text-center py-5">
+                                    <td colspan="6" class="text-center py-5">
                                         <div class="alert alert-info mb-0">
                                             <h5 class="alert-heading mb-3">No reservations found!</h5>
-                                            <p>You have no pending or approved reservations.
+                                            <p>You currently have no reservations to display.
                                             <a href="../resident-side/make-reservation.php" class="alert-link fw-bold">
                                                 Make a reservation now!
                                             </a></p>
@@ -182,7 +185,25 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 </div>
 
+<!-- Bootstrap JS -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../resident-side/javascript/sidebar.js"></script>
+
+<!-- Inline JS for Delete Button -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+
+    deleteButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const row = btn.closest('tr');
+            if (confirm("Are you sure you want to remove this reservation from view?")) {
+                row.style.display = 'none'; // hides the row only
+            }
+        });
+    });
+});
+</script>
+
 </body>
 </html>
