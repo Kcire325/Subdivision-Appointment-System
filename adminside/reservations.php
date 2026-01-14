@@ -93,7 +93,7 @@ $reservations = $conn->query($res_sql);
                         </a>
                     </li>
                     <li class="menu-item">
-                        <a href="create-account/create-account.php" class="menu-link">
+                        <a href="create-account.php" class="menu-link">
                             <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
                             <span class="menu-label">Create Account</span>
                         </a>
