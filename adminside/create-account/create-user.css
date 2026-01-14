@@ -1,0 +1,543 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Poppins", sans-serif;
+}
+
+:root {
+    --color-text-primary: #1F2936;
+    --color-text-placeholder: #798EAE;
+    --color-bg-primary: #f9fafb;
+    --color-bg-secondary: #ECECFD;
+    --color-bg-sidebar: #FFFFFF;
+    --color-border-hr: #E2E8F0;
+    --color-hover-primary: #695CFE;
+    --color-hover-secondary: #e2e2fb;
+    --color-shadow: rgba(0, 0, 0, 0.05);
+}
+
+body {
+    background: var(--color-bg-primary);
+
+}
+
+.sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    width: 270px;
+    flex-shrink: 0;
+    background: var(--color-bg-sidebar);
+    border-right: 1px solid var(--color-border-hr);
+    box-shadow: 0 3px 9px var(--color-shadow);
+    transition: width 0.4s ease;
+}
+
+.sidebar.collapsed {
+    width: 90px;
+}
+
+.sidebar .sidebar-header {
+    display: flex;
+    padding: 20px 18px;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--color-border-hr);
+}
+
+.sidebar-header .header-logo {
+    width: 46px;
+    height: 46px;
+    object-fit: cover;
+    display: block;
+    border-radius: 50%;
+}
+
+.sidebar.collapsed .sidebar-header .header-logo {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.sidebar-header .sidebar-toggle {
+    width: 40px;
+    height: 40px;
+    border: none;
+    position: absolute;
+    right: 18px;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-primary);
+    background: var(--color-bg-secondary);
+}
+
+.sidebar.collapsed .sidebar-header .sidebar-toggle {
+    height: 48px;
+    width: 50px;
+    transform: translateX(-2px);
+}
+
+.sidebar-header .sidebar-toggle:hover {
+    background: var(--color-hover-secondary);
+}
+
+.sidebar-header .sidebar-toggle span {
+    display: inline-block;
+    font-size: 1.75rem;
+    transition: transform 0.4s ease;
+}
+
+.sidebar.collapsed .sidebar-toggle span {
+    transform: rotate(180deg) scale(1.3);
+}
+
+.sidebar.collapsed .menu-link .menu-label {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.menu-link .menu-label {
+    transition: 0.3s ease;
+}
+
+.sidebar .sidebar-content {
+    padding: 20px 18px;
+    overflow: hidden auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-text-placeholder) transparent;
+}
+
+.sidebar-content .menu-list {
+    list-style: none;
+    gap: 5px;
+    flex-direction: column;
+    padding-left: 0;
+}
+
+.menu-list .menu-link {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+    padding: 12px 15px;
+    border-radius: 8px;
+    color: var(--color-text-primary);
+    transition: 0.3s ease;
+}
+
+.menu-list .menu-link:is(:hover, .active) {
+    color: white;
+    background-color: black;
+}
+
+.menu-list .menu-item .menu-link:hover img {
+    filter: brightness(0) invert(1);
+}
+
+.menu-link .menu-label {
+    transition: 0.3s ease
+}
+
+.app-layout {
+    display: flex;
+    min-height: 100vh;
+    width: 100%;
+    /* FIX 1 */
+}
+
+.main-content {
+    flex: 1;
+    display: flex;
+    align-items: flex-start;
+    padding: 40px 20px;
+}
+
+/* Card container */
+.reservation-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 100%;                    /* FULL WIDTH */
+    margin: 20px 0;                 /* Remove center box feel */
+    padding: 0;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+/* Header */
+.page-header {
+    width: 100%;
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 600;
+    padding: 15px 0;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 20px;
+}
+
+/* ------facility | date time | payment icon ------*/
+/* ------ PROGRESS BAR ------*/
+
+.container {
+    max-width: 1200px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.container .steps {
+    display: flex;
+    width: 85%;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+    padding: 20px 0;
+}
+
+/* ADD THIS - Wrapper for circle + label */
+.step-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+}
+
+.steps .circle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 60px;
+    width: 60px;
+    font-size: 22px;
+    color: #999;
+    font-weight: 500;
+    border-radius: 50%;
+    background: #fff;
+    border: 4px solid #e0e0e0;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+/* Icons inside circles - grey by default */
+.steps .circle img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    filter: grayscale(100%); /* Make icon grey */
+    opacity: 0.5; /* Make it lighter */
+    transition: all 0.3s ease;
+}
+
+/* Active circle - green border */
+.steps .circle.active {
+    border-color: #22c55e;
+    border-width: 5px;
+}
+
+/* Active circle icon - normal color */
+.steps .circle.active img {
+    filter: grayscale(0%); /* Remove grey, show normal colors */
+    opacity: 1; /* Full opacity */
+}
+
+/* ADD THIS - Label text below circles */
+.step-label {
+    position: absolute;
+    top: 70px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #cccccc;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+/* ADD THIS - Active label green */
+.step-wrapper .circle.active ~ .step-label {
+    color: #22c55e;
+}
+
+/* ADD THIS - Completed label green */
+.step-wrapper .circle.completed ~ .step-label {
+    color: #22c55e;
+}
+
+.steps .progress-bar {
+    position: absolute;
+    height: 4px;
+    width: 100%;
+    background: #e0e0e0;
+    z-index: 1;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.progress-bar .indicator {
+    position: absolute;
+    height: 100%;
+    width: 0%;
+    background: #22c55e;
+    transition: all 300ms ease;
+    z-index: 1;
+}
+
+/* ------------------------------- */
+
+.steps .circle.active{
+    border-color: green;
+    color: green;
+    transition-delay: 0s;
+}
+
+.container .buttons{
+    display: flex;
+    gap:40rem;
+    padding:15px;
+}
+
+.buttons .btn{
+    padding:8px 25px;
+    background: #4070f4;
+    border:none;
+    border-radius: 8px;
+    color:#D0D7FF;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.buttons .btn:disabled{
+    pointer-events: auto;
+    cursor: not-allowed;
+}
+
+
+
+.row.align-items-start img {
+    height: 60px;
+}
+
+.col.facility {
+    color: #9CEDB3;
+    font-weight: bold;
+}
+
+.col.date-time {
+    color: #D0D7FF;
+    font-weight: bold;
+}
+
+.col.payment {
+    color: #D9D9D9;
+    font-weight: bold;
+}
+
+/* <---------   ---------> */
+
+/* Body */
+.card-body {
+    min-height: 250px;
+    background: white;
+    border-radius: 8px;
+    margin: 0px auto;
+    padding: 30px !important;
+}
+
+/* Facility images */
+.col.chapel img {
+    height: 150px;
+}
+
+.col.basketball img {
+    height: 150px;
+}
+
+.col.hall img {
+    height: 150px;
+}
+
+.col.tennis img {
+    height: 150px;
+}
+/* <---------   ---------> */
+
+/* <---------  FACILITY DESIGN  ---------> */
+.card-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    height: 100%;
+}
+
+.card.h-100{
+    cursor: pointer ;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+    height: 480px !important;
+}
+
+/* Hover effect */
+.card.h-100:hover {
+    transform: translateY(-5px) !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15)!important;
+}
+
+/* Click effect */
+.card.h-100:active {
+    transform: scale(0.98);
+}
+
+.col.selected .card {
+    background-color: #0d6efd;
+    border: 2px solid #0d6efd;
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.4);
+    position: relative;
+}
+
+.col.selected .card::before {
+    content: "✓";
+    position: absolute;
+    top: -17px;
+    right: -17px;
+    background-color: #0d6efd;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+    z-index: 10;
+}
+/* <---------   ---------> */
+
+
+/* ------ Calendar Design ------*/
+
+.calendar-wrapper {
+    padding: 20px;
+    margin: 0 auto;
+}
+
+#calendar {
+    border-radius: 13px;
+    border: 1px solid #ddd;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    height: 600px;
+    width: 600px;
+
+}
+
+#calendar .fc-header-toolbar {
+    background-color: #D0D7FF;
+    color: white;
+    padding: 10px;
+    border-radius: 8px 8px 0 0;
+}
+
+.fc .fc-toolbar.fc-header-toolbar {
+    margin-bottom: 0;
+    /* remove the margin */
+}
+
+.fc .fc-button-primary {
+    border: none;
+    background-color: #D0D7FF;
+}
+
+.fc .fc-button-primary:hover {
+    background-color: #D0D7FF;
+
+}
+
+/* <---------   ---------> */
+/* <--------- Modal Design  ---------> */
+.slots-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+.btn {
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+}
+
+.btn.slot-btn {
+    background-color: #c8f5d4;
+    color: #155724;
+    padding: 4px 7px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.btn.slot-btn:hover {
+    background-color: #c3e6cb;
+}
+
+.btn.slot-btn.active {
+    background-color: #0d6efd;
+    /* Bootstrap blue */
+    color: #fff;
+}
+
+.btn.slot-btn.selected {
+    background-color: #0d6efd;
+    color: white;
+}
+
+.btn.slot-btn {
+    position: relative;
+    /* REQUIRED */
+}
+
+.btn.slot-btn.selected::after {
+    content: '✓';
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background-color: white;
+    color: #007bff;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    border: 2px solid #007bff;
+}
+
+/* my-reservation table */
+.table.table-hover tbody tr {
+    transition: all 0.3s ease;
+}
+
+.table.table-hover tbody tr:hover {
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    transform: scale(1.01);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+.table-responsive{
+    width:1500px;
+}
+
+/* ------------------- */
+
+    /* <---------   ---------> */
+@media (max-width: 576px) {
+    .slots-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+} 
