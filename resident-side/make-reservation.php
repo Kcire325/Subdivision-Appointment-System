@@ -74,12 +74,6 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                         </a>
                     </li>
                     <li class="menu-item">
-                        <a href="#" class="menu-link">
-                            <img src="../asset/bell.png" alt="My Balance Icon" class="menu-icon">
-                            <span class="menu-label">My Balance</span>
-                        </a>
-                    </li>
-                    <li class="menu-item">
                         <a href="../my-account/my-account.php" class="menu-link">
                             <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
                             <span class="menu-label">My Account</span>
