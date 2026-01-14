@@ -72,8 +72,8 @@ if (!empty($user['ProfilePictureURL']) && !file_exists('../' . $user['ProfilePic
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
 
     <!-- Layout Styles -->
-    <link rel="stylesheet" href="../adminside/admin.css">
-    <link rel="stylesheet" href="navigation.css">
+    <link rel="stylesheet" href="../resident-side/make-reservation.css">
+    <link rel="stylesheet" href="../resident-side/style/side-navigation.css">
 </head>
 
 <body>
