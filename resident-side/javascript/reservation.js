@@ -10,6 +10,7 @@ var reservationData = {
     totalCost: 0
 };
 var tempCalendarEvent = null; // Store temporary event for calendar display
+var allEvents = []; // Store all events globally for time slot checking
 
 $(document).ready(function () {
     // Initialize calendar when page loads
@@ -28,8 +29,6 @@ $(document).ready(function () {
         // Store facility name globally
         selectedFacility = $(this).data('facility');
 
-        console.log("Facility selected:", selectedFacility);
-
         // Update reservation data
         reservationData.facility = selectedFacility;
 
@@ -38,10 +37,20 @@ $(document).ready(function () {
 
         // Reload calendar to show only this facility's events
         load_events();
+        
+        // Check if we can enable next button
+        checkNextButtonState();
     });
 
     // Time slot selection handler
-    $(document).on('click', '.slot-btn', function () {
+    $(document).on('click', '.slot-btn', function (e) {
+        // Prevent action if button is disabled or booked
+        if ($(this).prop('disabled') || $(this).hasClass('disabled') || $(this).hasClass('booked')) {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        }
+
         // Remove selected class from all buttons
         $('.slot-btn').removeClass('selected');
 
@@ -63,6 +72,9 @@ $(document).ready(function () {
 
         // Update summary display
         updateSummaryDisplay();
+        
+        // Check if form is complete
+        checkModalFormCompletion();
     });
 
     // Phone number validation (only numbers)
@@ -84,13 +96,115 @@ $(document).ready(function () {
 
         // Update reservation data
         reservationData.phone = cleaned;
+        
+        // Check if form is complete
+        checkModalFormCompletion();
     });
 
     // Save reservation button click handler - MODIFIED
     $('#saveReservationBtn').on('click', function () {
         saveToPaymentSection();
     });
+
+    // Modal shown event - check time slots after modal is fully loaded
+    $('#myModal').on('shown.bs.modal', function () {
+        var selectedDate = $("#event_start_date").val();
+        var facilityName = $("#selected_facility").val() || selectedFacility;
+        
+        // Disable save button initially
+        checkModalFormCompletion();
+        
+        if (selectedDate && facilityName) {
+            // Small delay to ensure time slot buttons are rendered
+            setTimeout(function() {
+                checkAndDisableBookedSlots(selectedDate, facilityName);
+            }, 100);
+        }
+    });
+
+    // Check form completion whenever inputs change
+    $(document).on('change keyup', '#phone, #event_note', function() {
+        checkModalFormCompletion();
+    });
+
+    // Check form completion when time slot is selected
+    $(document).on('click', '.slot-btn', function() {
+        // Delay to ensure the selection is processed
+        setTimeout(function() {
+            checkModalFormCompletion();
+        }, 50);
+    });
+
+    // NEXT button click handler - validate before proceeding
+    $('#next, .btn-next').on('click', function(e) {
+        var currentPage = getCurrentPage();
+        
+        // Check if user can proceed from current page
+        if (!canProceedFromCurrentPage()) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var message = "";
+            if (currentPage === 'select-facility') {
+                message = "Please select a facility before proceeding.";
+            } else if (currentPage === 'date-time') {
+                message = "Please select a date on the calendar and complete the booking form (phone number and time slot) before proceeding to payment.";
+            } else {
+                message = "Please complete all required fields before proceeding.";
+            }
+            
+            Swal.fire({
+                icon: "warning",
+                title: "Cannot Proceed",
+                text: message,
+                confirmButtonText: "OK"
+            });
+            
+            return false;
+        }
+        
+        // Allow the default action (navigation) to proceed
+        return true;
+    });
+
+    // Initialize next button state on page load with delay
+    setTimeout(function() {
+        checkNextButtonState();
+    }, 500);
+    
+    // Re-check button state when modal closes
+    $('#myModal').on('hidden.bs.modal', function() {
+        checkNextButtonState();
+    });
 });
+
+/**
+ * Open booking modal with selected date
+ */
+function openBookingModal(start, end) {
+    clearModalForm();
+
+    var startDate = moment(start).format("YYYY-MM-DD");
+    var endDate = moment(end).format("YYYY-MM-DD");
+
+    $("#event_start_date").val(startDate);
+    $("#event_end_date").val(endDate);
+    $("#facility_name").val(selectedFacility);
+    $("#selected_facility").val(selectedFacility);
+    $("#display_selected_date").text(moment(start).format("MMMM DD, YYYY"));
+
+    // Update reservation data with selected date
+    reservationData.date = moment(start).format("MMMM DD, YYYY");
+    
+    // Update summary display
+    updateSummaryDisplay();
+
+    // Check and disable booked time slots for this date and facility
+    checkAndDisableBookedSlots(startDate, selectedFacility);
+
+    $("#myModal").modal("show");
+    $('#calendar').fullCalendar('unselect');
+}
 
 /**
  * Load events from database and initialize calendar
@@ -100,18 +214,21 @@ function load_events() {
         url: "display_event.php",
         dataType: "json",
         success: function (response) {
+            // Store all events globally
+            allEvents = response.data || [];
+
             // Destroy existing calendar instance
             $('#calendar').fullCalendar('destroy');
 
             // Filter events based on selected facility
             var filteredEvents = [];
-            if (response.data && response.data.length > 0) {
+            if (allEvents.length > 0) {
                 if (selectedFacility) {
-                    filteredEvents = response.data.filter(function (event) {
+                    filteredEvents = allEvents.filter(function (event) {
                         return event.title === selectedFacility;
                     });
                 } else {
-                    filteredEvents = response.data;
+                    filteredEvents = allEvents;
                 }
             }
 
@@ -143,25 +260,49 @@ function load_events() {
                         return;
                     }
 
-                    clearModalForm();
+                    // Check if user already has a saved booking
+                    if (tempCalendarEvent !== null) {
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Booking Already Exists",
+                            html: "You already have a booking for <strong>" + tempCalendarEvent.title + "</strong><br>" +
+                                  "Date: " + moment(tempCalendarEvent.start).format("MMMM DD, YYYY") + "<br>" +
+                                  "Time: " + moment(tempCalendarEvent.start).format("h:mm A") + " - " + moment(tempCalendarEvent.end).format("h:mm A") + "<br><br>" +
+                                  "Do you want to change your booking?",
+                            showCancelButton: true,
+                            confirmButtonText: "Yes, Change Booking",
+                            cancelButtonText: "No, Keep Current",
+                            confirmButtonColor: "#ff6b6b"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Clear the temporary event to allow new booking
+                                tempCalendarEvent = null;
+                                
+                                // Reset reservation data except facility
+                                var savedFacility = reservationData.facility;
+                                reservationData = {
+                                    facility: savedFacility,
+                                    date: '',
+                                    timeStart: '',
+                                    timeEnd: '',
+                                    phone: '',
+                                    note: '',
+                                    totalCost: 0
+                                };
+                                
+                                // Reload calendar without temp event
+                                load_events();
+                                
+                                // Now open modal for new booking
+                                openBookingModal(start, end);
+                            } else {
+                                $('#calendar').fullCalendar('unselect');
+                            }
+                        });
+                        return;
+                    }
 
-                    var startDate = moment(start).format("YYYY-MM-DD");
-                    var endDate = moment(end).format("YYYY-MM-DD");
-
-                    $("#event_start_date").val(startDate);
-                    $("#event_end_date").val(endDate);
-                    $("#facility_name").val(selectedFacility);
-                    $("#selected_facility").val(selectedFacility);
-                    $("#display_selected_date").text(moment(start).format("MMMM DD, YYYY"));
-
-                    // Update reservation data with selected date
-                    reservationData.date = moment(start).format("MMMM DD, YYYY");
-                    
-                    // Update summary display
-                    updateSummaryDisplay();
-
-                    $("#myModal").modal("show");
-                    $('#calendar').fullCalendar('unselect');
+                    openBookingModal(start, end);
                 },
 
                 eventClick: function (event) {
@@ -219,27 +360,260 @@ function load_events() {
                         return;
                     }
 
-                    clearModalForm();
+                    // Check if user already has a saved booking
+                    if (tempCalendarEvent !== null) {
+                        Swal.fire({
+                            icon: "warning",
+                            title: "Booking Already Exists",
+                            html: "You already have a booking for <strong>" + tempCalendarEvent.title + "</strong><br>" +
+                                  "Date: " + moment(tempCalendarEvent.start).format("MMMM DD, YYYY") + "<br>" +
+                                  "Time: " + moment(tempCalendarEvent.start).format("h:mm A") + " - " + moment(tempCalendarEvent.end).format("h:mm A") + "<br><br>" +
+                                  "Do you want to change your booking?",
+                            showCancelButton: true,
+                            confirmButtonText: "Yes, Change Booking",
+                            cancelButtonText: "No, Keep Current",
+                            confirmButtonColor: "#ff6b6b"
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                // Clear the temporary event to allow new booking
+                                tempCalendarEvent = null;
+                                
+                                // Reset reservation data except facility
+                                var savedFacility = reservationData.facility;
+                                reservationData = {
+                                    facility: savedFacility,
+                                    date: '',
+                                    timeStart: '',
+                                    timeEnd: '',
+                                    phone: '',
+                                    note: '',
+                                    totalCost: 0
+                                };
+                                
+                                // Reload calendar without temp event
+                                load_events();
+                                
+                                // Now open modal for new booking
+                                openBookingModal(start, end);
+                            } else {
+                                $('#calendar').fullCalendar('unselect');
+                            }
+                        });
+                        return;
+                    }
 
-                    var startDate = moment(start).format("YYYY-MM-DD");
-                    var endDate = moment(end).format("YYYY-MM-DD");
-
-                    $("#event_start_date").val(startDate);
-                    $("#event_end_date").val(endDate);
-                    $("#facility_name").val(selectedFacility);
-                    $("#selected_facility").val(selectedFacility);
-                    $("#display_selected_date").text(moment(start).format("MMMM DD, YYYY"));
-
-                    // Update reservation data with selected date
-                    reservationData.date = moment(start).format("MMMM DD, YYYY");
-                    
-                    // Update summary display
-                    updateSummaryDisplay();
-
-                    $("#myModal").modal("show");
-                    $('#calendar').fullCalendar('unselect');
+                    openBookingModal(start, end);
                 }
             });
+        }
+    });
+}
+
+/**
+ * Get current page/step
+ */
+function getCurrentPage() {
+    // Check if calendar exists (Date & Time page)
+    if ($('#calendar').length > 0 && $('#calendar').is(':visible')) {
+        return 'date-time';
+    }
+    // Check for facility cards without calendar (Select Facility page)
+    if ($('.card-link').length > 0 && $('#calendar').length === 0) {
+        return 'select-facility';
+    }
+    // If there are facility cards and no visible calendar, it's select facility
+    if ($('.card-link').length > 0 && !$('#calendar').is(':visible')) {
+        return 'select-facility';
+    }
+    // Check for payment elements
+    if ($('#payment_method').length > 0 || $('.payment-section').length > 0) {
+        return 'payment';
+    }
+    
+    // Fallback: check URL or active step indicator
+    var activeStep = $('.progress-step.active, .step-circle.active').parent().find('.step-label').text().toLowerCase();
+    if (activeStep.includes('facility')) {
+        return 'select-facility';
+    } else if (activeStep.includes('date') || activeStep.includes('time')) {
+        return 'date-time';
+    } else if (activeStep.includes('payment')) {
+        return 'payment';
+    }
+    
+    return 'unknown';
+}
+
+/**
+ * Check if user can proceed from current page
+ */
+function canProceedFromCurrentPage() {
+    var currentPage = getCurrentPage();
+    
+    if (currentPage === 'select-facility') {
+        // On facility page, just need a facility selected
+        return reservationData.facility !== null && reservationData.facility !== '';
+    } else if (currentPage === 'date-time') {
+        // On date & time page, need complete booking
+        return isReservationComplete();
+    } else if (currentPage === 'payment') {
+        // On payment page, need complete reservation
+        return isReservationComplete();
+    }
+    
+    // Default: allow if reservation is complete
+    return isReservationComplete();
+}
+
+/**
+ * Check if reservation is complete (all required data filled)
+ */
+function isReservationComplete() {
+    return reservationData.facility && 
+           reservationData.date && 
+           reservationData.timeStart && 
+           reservationData.timeEnd && 
+           reservationData.phone &&
+           /^\d{10,11}$/.test(reservationData.phone);
+}
+
+/**
+ * Check and update NEXT button state based on reservation completion
+ */
+function checkNextButtonState() {
+    var $nextBtn = $('#next, .btn-next');
+    
+    // Don't do anything if button doesn't exist
+    if ($nextBtn.length === 0) {
+        return;
+    }
+    
+    if (canProceedFromCurrentPage()) {
+        $nextBtn.prop('disabled', false).removeClass('disabled');
+    } else {
+        $nextBtn.prop('disabled', true).addClass('disabled');
+    }
+}
+
+/**
+ * Check if modal form is complete and enable/disable save button
+ */
+function checkModalFormCompletion() {
+    var facilityName = $("#selected_facility").val() || selectedFacility;
+    var phone = $("#phone").val().trim();
+    var selectedDate = $("#event_start_date").val();
+    var timeStart = $("#selected_time_start").val();
+    var timeEnd = $("#selected_time_end").val();
+    
+    var isComplete = true;
+    var missingFields = [];
+    
+    // Check facility
+    if (!facilityName) {
+        isComplete = false;
+        missingFields.push("facility");
+    }
+    
+    // Check date
+    if (!selectedDate) {
+        isComplete = false;
+        missingFields.push("date");
+    }
+    
+    // Check phone
+    if (!phone || !/^\d{10,11}$/.test(phone)) {
+        isComplete = false;
+        missingFields.push("phone");
+    }
+    
+    // Check time slot
+    if (!timeStart || !timeEnd) {
+        isComplete = false;
+        missingFields.push("time slot");
+    }
+    
+    // Enable or disable the save button
+    var $saveBtn = $('#saveReservationBtn');
+    if (isComplete) {
+        $saveBtn.prop('disabled', false).removeClass('disabled');
+    } else {
+        $saveBtn.prop('disabled', true).addClass('disabled');
+    }
+}
+
+/**
+ * Check and disable already booked time slots
+ */
+function checkAndDisableBookedSlots(selectedDate, facilityName) {
+    // Get list of booked events first
+    var bookedSlots = allEvents.filter(function(event) {
+        var eventDate = moment(event.start).format("YYYY-MM-DD");
+        var isMatch = event.title === facilityName && eventDate === selectedDate;
+        return isMatch;
+    });
+
+    // Also check if temp event matches
+    if (tempCalendarEvent) {
+        var tempEventDate = moment(tempCalendarEvent.start).format("YYYY-MM-DD");
+        if (tempCalendarEvent.title === facilityName && tempEventDate === selectedDate) {
+            bookedSlots.push(tempCalendarEvent);
+        }
+    }
+
+    // Process each time slot button
+    $('.slot-btn').each(function() {
+        var $button = $(this);
+        var slotStart = $button.data('start'); // e.g., "08:00"
+        var slotEnd = $button.data('end');     // e.g., "09:00"
+        
+        if (!slotStart || !slotEnd) {
+            return;
+        }
+        
+        var slotStartTime = moment(selectedDate + ' ' + slotStart, 'YYYY-MM-DD HH:mm');
+        var slotEndTime = moment(selectedDate + ' ' + slotEnd, 'YYYY-MM-DD HH:mm');
+        
+        // Check if this slot conflicts with any booked event
+        var isBooked = bookedSlots.some(function(event) {
+            var eventStart = moment(event.start);
+            var eventEnd = moment(event.end);
+            
+            // Check for time overlap
+            var overlaps = (slotStartTime.isBefore(eventEnd) && slotEndTime.isAfter(eventStart));
+            
+            return overlaps;
+        });
+        
+        if (isBooked) {
+            // Disable the booked slot
+            $button.prop('disabled', true)
+                   .addClass('disabled booked')
+                   .removeClass('selected') // Remove selected if it was selected
+                   .css({
+                       'opacity': '0.5',
+                       'cursor': 'not-allowed',
+                       'background-color': '#e0e0e0',
+                       'color': '#999',
+                       'pointer-events': 'none'
+                   });
+            
+            // Add "Booked" badge if not already present
+            if ($button.find('.badge-danger').length === 0) {
+                $button.append(' <span class="badge badge-danger ml-2">Booked</span>');
+            }
+        } else {
+            // Enable the available slot (remove any previous disabled state)
+            $button.prop('disabled', false)
+                   .removeClass('disabled booked')
+                   .css({
+                       'opacity': '',
+                       'cursor': '',
+                       'background-color': '',
+                       'color': '',
+                       'pointer-events': ''
+                   });
+            
+            // Remove "Booked" badge
+            $button.find('.badge-danger').remove();
         }
     });
 }
@@ -259,24 +633,42 @@ function saveToPaymentSection() {
 
     // Validate required fields
     if (!facilityName) {
-        alert("Please select a facility from the cards.");
+        Swal.fire({
+            icon: "warning",
+            title: "Facility Required",
+            text: "Please select a facility from the cards."
+        });
         return;
     }
 
     if (!phone) {
-        alert("Please enter your phone number.");
-        $("#phone").focus();
+        Swal.fire({
+            icon: "warning",
+            title: "Phone Required",
+            text: "Please enter your phone number."
+        }).then(() => {
+            $("#phone").focus();
+        });
         return;
     }
 
     if (!/^\d{10,11}$/.test(phone)) {
-        alert("Please enter a valid phone number (10-11 digits).");
-        $("#phone").focus();
+        Swal.fire({
+            icon: "error",
+            title: "Invalid Phone Number",
+            text: "Please enter a valid phone number (10–11 digits)."
+        }).then(() => {
+            $("#phone").focus();
+        });
         return;
     }
 
     if (!timeStart || !timeEnd) {
-        alert("Please select a time slot.");
+        Swal.fire({
+            icon: "warning",
+            title: "Time Slot Required",
+            text: "Please select a time slot."
+        });
         return;
     }
 
@@ -314,8 +706,16 @@ function saveToPaymentSection() {
     // Reload calendar to show the temporary event
     load_events();
 
+    // Enable next button since reservation is now complete
+    checkNextButtonState();
+
     // Show success message
-    alert("Reservation details saved! You can now proceed to the next step when ready.");
+    Swal.fire({
+        icon: "success",
+        title: "Reservation Saved!",
+        text: "Your booking details have been saved. You can now proceed to the payment step.",
+        confirmButtonText: "OK"
+    });
 
     // Close modal
     $("#myModal").modal("hide");
@@ -431,8 +831,6 @@ function updatePaymentSummary() {
         $summaryCard.find('.breakdown-price').text(formattedPrice);
         $summaryCard.find('.total-price').text(formattedPrice);
     });
-
-    console.log("Payment summary updated:", reservationData);
 }
 
 /**
@@ -444,12 +842,17 @@ function clearModalForm() {
     $('#selected_time_start').val('');
     $('#selected_time_end').val('');
 
-    // Reset time slot buttons
+    // Reset time slot buttons - only remove selected class, don't disable
     $('.slot-btn').removeClass('selected');
 
     // Remove validation classes
     $('#phone').removeClass('is-invalid');
     $('#phoneFeedback').hide();
+    
+    // Disable save button since form is now incomplete
+    $('#saveReservationBtn').prop('disabled', true).addClass('disabled');
+    
+    // Don't re-disable slots here - they should remain in their current state
 }
 
 /**
@@ -508,26 +911,35 @@ function saveFinalReservation() {
             $btn.html(originalText);
 
             if (response.status === true) {
-                alert("Reservation saved successfully! " + (response.msg || ""));
+                Swal.fire({
+                    icon: "success",
+                    title: "Reservation Saved!",
+                    text: "Your reservation has been saved successfully.",
+                    confirmButtonText: "OK"
+                }).then(() => {
+                    // Clear temporary calendar event
+                    tempCalendarEvent = null;
 
-                // Clear temporary calendar event
-                tempCalendarEvent = null;
+                    // Clear reservation data
+                    reservationData = {
+                        facility: '',
+                        date: '',
+                        timeStart: '',
+                        timeEnd: '',
+                        phone: '',
+                        note: '',
+                        totalCost: 0
+                    };
 
-                // Clear reservation data
-                reservationData = {
-                    facility: '',
-                    date: '',
-                    timeStart: '',
-                    timeEnd: '',
-                    phone: '',
-                    note: '',
-                    totalCost: 0
-                };
-
-                // Redirect to My Reservations page or refresh
-                window.location.href = "../my-reservations/myreservations.php";
+                    // Redirect after alert closes
+                    window.location.href = "../my-reservations/myreservations.php";
+                });
             } else {
-                alert(response.msg || "Error saving reservation. Please try again.");
+                Swal.fire({
+                    icon: "error",
+                    title: "Reservation Failed",
+                    text: response.msg || "Error saving reservation. Please try again."
+                });
             }
         },
         error: function (xhr, status, error) {
