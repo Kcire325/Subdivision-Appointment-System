@@ -32,6 +32,9 @@ body {
     border-right: 1px solid var(--color-border-hr);
     box-shadow: 0 3px 9px var(--color-shadow);
     transition: width 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    
 }
 
 .sidebar.collapsed {
@@ -130,21 +133,23 @@ body {
     color: var(--color-text-primary);
     transition: 0.3s ease;
 }
+
 /* turn the image white */
-.sidebar img{
+.sidebar img {
     filter: brightness(0) invert(1);
 }
 
-    /* if the image is active or hovered the image turn black */
+/* if the image is active or hovered the image turn black */
 .menu-list .menu-link:is(:hover, .active) img {
     filter: brightness(0);
-    
+
 }
- /* if the text is active or hovered the image turn black */
+
+/* if the text is active or hovered the image turn black */
 .menu-list .menu-link:is(:hover, .active) {
     color: black;
-    background-color:white;
-    
+    background-color: white;
+
 }
 
 
@@ -157,4 +162,36 @@ body {
     min-height: 100vh;
     width: 100%;
     /* FIX 1 */
-}  
+}
+
+.logout-section {
+    margin-top: auto;
+    padding: 20px 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.logout-link {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    white-space: nowrap;
+    padding: 12px 15px;
+    border-radius: 8px;
+    color: var(--color-text-primary);
+    transition: 0.3s ease;
+}
+
+.logout-link:hover {
+    color: black;
+    background-color: white;
+}
+
+.logout-link:hover img {
+    filter: brightness(0);
+}
+
+.sidebar.collapsed .logout-link .menu-label {
+    opacity: 0;
+    pointer-events: none;
+}

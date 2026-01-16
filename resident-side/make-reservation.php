@@ -79,13 +79,13 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                         </a>
                     </li>
                 </ul>
-                <div class="sidebar-footer">
-                    <a href="../logout.php" class="logout-btn">
-                        <img src="../asset/logout.png" alt="Logout Icon" class="menu-icon">
-                        <span class="menu-label">Log Out</span>
-                    </a>
-                </div>
             </div>  
+            <div class="logout-section">
+            <a href="#" class="logout-link">
+                <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
+                <span class="menu-label">Log Out</span>
+            </a>
+        </div>
         </aside>
 
         <!-- MAIN CONTENT -->
@@ -126,15 +126,14 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
 
                     <!-- FACILITY -->
                     <div class="card-body facility">
-                        <div class="row row-cols-1 row-cols-md-4 g-4">
+                        <div class="row row-cols-1 row-cols-md-4 g-5">
                             <div class="col chapel">
                                 <a href="#" class="card-link" data-facility="Chapel">
                                     <div class="card h-100">
                                         <img src="../asset/chapel.png" class="card-img-top" alt="chapel">
                                         <div class="card-body content">
                                             <h5 class="card-title">Chapel</h5>
-                                            <p class="card-text">Perfect for weddings, baptisms, and religious
-                                                ceremonies in a peaceful setting.</p>
+                                            <p class="card-text">The Catholic Chapel provides a peaceful and sacred venue for weddings, baptisms, thanksgiving masses, memorial services, and other religious ceremonies. Its calm atmosphere makes it suitable for a wide range of spiritual events.</p>
                                         </div>
                                     </div>
                                 </a>
@@ -145,8 +144,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                         <img src="../asset/basketball.png" class="card-img-top" alt="basketball">
                                         <div class="card-body content">
                                             <h5 class="card-title">Basketball Court</h5>
-                                            <p class="card-text">Full-size court for basketball games, tournaments, and
-                                                sports activities.</p>
+                                            <p class="card-text">The basketball court is a full-size area designed for games, practice sessions, sports events, and friendly tournaments. Its open layout supports smooth play and allows for organized or recreational basketball activities.</p>
                                         </div>
                                     </div>
                                 </a>
@@ -157,8 +155,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                         <img src="../asset/multi-purpose.png" class="card-img-top" alt="hall">
                                         <div class="card-body content">
                                             <h5 class="card-title">Multipurpose Hall</h5>
-                                            <p class="card-text">Spacious hall for events, parties, meetings, and
-                                                community gatherings.</p>
+                                            <p class="card-text">The multipurpose hall offers a flexible and spacious venue for meetings, parties, events, workshops, and community programs. Its adaptable layout makes it suitable for a wide range of gatherings and organized activities.</p>
                                         </div>
                                     </div>
                                 </a>
@@ -169,8 +166,7 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                         <img src="../asset/tennis-court.png" class="card-img-top" alt="tennis">
                                         <div class="card-body content">
                                             <h5 class="card-title">Tennis Court</h5>
-                                            <p class="card-text">Professional tennis court for matches, practice, and
-                                                tennis lessons.</p>
+                                            <p class="card-text">The tennis court provides a smooth and well-maintained surface for tennis matches and practice. It forms part of the recreational area in the subdivision and is ideal for outdoor activities, fitness, and leisure play.</p>
                                         </div>
                                     </div>
                                 </a>
@@ -428,8 +424,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                         </div>
                     </div>
 
-                    <div class="buttons">
-                        <button class="btn" type="button" id="prev">Prev</button>
+                    <div class="footer-buttons">
+                        <button class="btn " type="button" id="prev">Prev</button>
                         <button class="btn" type="button" id="next">Next</button>
                     </div>
                 </div>

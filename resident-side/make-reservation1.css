@@ -33,15 +33,17 @@ body {
     background: white;
     border-radius: 12px;
     overflow: hidden;
-    max-width: 1500px;
+    max-width: 1800px;
+    width: 95%;
     align-items: center;
-    margin: 40px auto;  /* Add top margin */
+    margin: 10px auto;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    padding: 0px;
 }
 
 /* Header */
 .page-header {
-    background: #dbe2ff;
+    background: linear-gradient(135deg, #5fd4d4 0%, #4fb8b8 100%);
     color: white;
     text-align: center;
     padding: 15px;
@@ -99,8 +101,10 @@ body {
     width: 50px;
     height: 50px;
     object-fit: contain;
-    filter: grayscale(100%); /* Make icon grey */
-    opacity: 0.5; /* Make it lighter */
+    filter: grayscale(100%);
+    /* Make icon grey */
+    opacity: 0.5;
+    /* Make it lighter */
     transition: all 0.3s ease;
 }
 
@@ -112,8 +116,10 @@ body {
 
 /* Active circle icon - normal color */
 .steps .circle.active img {
-    filter: grayscale(0%); /* Remove grey, show normal colors */
-    opacity: 1; /* Full opacity */
+    filter: grayscale(0%);
+    /* Remove grey, show normal colors */
+    opacity: 1;
+    /* Full opacity */
 }
 
 /* ADD THIS - Label text below circles */
@@ -130,12 +136,12 @@ body {
 }
 
 /* ADD THIS - Active label green */
-.step-wrapper .circle.active ~ .step-label {
+.step-wrapper .circle.active~.step-label {
     color: #22c55e;
 }
 
 /* ADD THIS - Completed label green */
-.step-wrapper .circle.completed ~ .step-label {
+.step-wrapper .circle.completed~.step-label {
     color: #22c55e;
 }
 
@@ -160,29 +166,29 @@ body {
 
 /* ------------------------------- */
 
-.steps .circle.active{
+.steps .circle.active {
     border-color: green;
     color: green;
     transition-delay: 0s;
 }
 
-.container .buttons{
+.container .buttons {
     display: flex;
-    gap:40rem;
-    padding:15px;
+    gap: 40rem;
+    padding: 15px;
 }
 
-.buttons .btn{
-    padding:8px 25px;
+.buttons .btn {
+    padding: 8px 25px;
     background: #4070f4;
-    border:none;
+    border: none;
     border-radius: 8px;
-    color:#D0D7FF;
+    color: #D0D7FF;
     font-size: 16px;
     cursor: pointer;
 }
 
-.buttons .btn:disabled{
+.buttons .btn:disabled {
     pointer-events: auto;
     cursor: not-allowed;
 }
@@ -235,6 +241,8 @@ body {
 .col.tennis img {
     height: 150px;
 }
+
+
 /* <---------   ---------> */
 
 /* <---------  FACILITY DESIGN  ---------> */
@@ -245,8 +253,8 @@ body {
     height: 100%;
 }
 
-.card.h-100{
-    cursor: pointer ;
+.card.h-100 {
+    cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease !important;
     height: 480px !important;
 }
@@ -254,7 +262,7 @@ body {
 /* Hover effect */
 .card.h-100:hover {
     transform: translateY(-5px) !important;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15)!important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
 }
 
 /* Click effect */
@@ -286,6 +294,7 @@ body {
     font-size: 18px;
     z-index: 10;
 }
+
 /* <---------   ---------> */
 
 
@@ -359,12 +368,13 @@ body {
 }
 
 /* Weekend styling if needed */
-.fc-day-sat, .fc-day-sun {
+.fc-day-sat,
+.fc-day-sun {
     background: rgba(255, 255, 255, 0.1) !important;
 }
 
 /* Remove grid lines */
-.fc-theme-standard td, 
+.fc-theme-standard td,
 .fc-theme-standard th {
     border: none !important;
 }
@@ -448,6 +458,7 @@ body {
 
 /* Responsive */
 @media (max-width: 991px) {
+
     .calendar-wrapper,
     .summary-card {
         margin-bottom: 20px;
@@ -455,19 +466,20 @@ body {
 }
 
 @media (max-width: 576px) {
+
     .calendar-wrapper,
     .summary-body {
         padding: 15px;
     }
-    
+
     .summary-title {
         font-size: 20px;
     }
-    
+
     .facility-name {
         font-size: 18px;
     }
-    
+
     .fc-toolbar-title {
         font-size: 18px !important;
     }
@@ -541,61 +553,68 @@ body {
 }
 
 .table.table-hover tbody tr:hover {
-    background: rgba(255,255,255,0.15);
+    background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     transform: scale(1.01);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
 }
 
-.table-responsive{
-    width:1500px;
+.table-responsive {
+    width: 1500px;
 }
 
 
 /*  styling for Save Reservation */
-.buttons {
+.footer-buttons {
     display: flex;
-    justify-content: space-between;
-    margin-top: 2rem;
-    gap: 1rem;
+    align-items: center;
+    width: 100%;
+    padding: 2rem 4rem 3rem;
+    border-top: 1px solid #e5e7eb;
 }
 
-.buttons .btn {
-    padding: 12px 30px;
-    font-size: 16px;
-    font-weight: 500;
-    border-radius: 8px;
-    border: none;
+.footer-buttons .btn {
+    padding: 1rem 3rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-width: 120px;
+    border: none;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-.buttons .btn:disabled {
+.footer-buttons .btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
 
-.buttons #prev {
-    background-color: #6c757d;
-    color: white;
+/* Prev stays left */
+.footer-buttons #prev {
+    background: #e5e7eb;
+    color: #6b7280;
 }
 
-.buttons #prev:hover:not(:disabled) {
-    background-color: #5a6268;
+.footer-buttons #prev:hover:not(:disabled) {
+    background: #d1d5db;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-.buttons #next {
-    background-color: #007bff;
+.footer-buttons #next {
+    margin-left: auto;
+    background-color: #ff6b6b;
     color: white;
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+
 }
 
-.buttons #next:hover:not(:disabled) {
-    background-color: #0056b3;
+.footer-buttons #next:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(255, 107, 107, 0.5);
+    background: #ff5252;
     transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+
 }
 
 /* Success button style for Save Reservation */
@@ -616,11 +635,12 @@ body {
     height: 1rem;
     margin-right: 0.5rem;
 }
+
 /* ------------------- */
 
-    /* <---------   ---------> */
+/* <---------   ---------> */
 @media (max-width: 576px) {
     .slots-container {
         grid-template-columns: repeat(2, 1fr);
     }
-} 
+}

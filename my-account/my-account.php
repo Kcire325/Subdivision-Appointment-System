@@ -64,6 +64,7 @@ if (!empty($user['ProfilePictureURL']) && !file_exists('../' . $user['ProfilePic
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <!-- Layout Styles -->
     <link rel="stylesheet" href="my-account1.css">
+    <link rel="stylesheet" href="../resident-side/style/side-navigation1.css">
     <!-- Bootstrap -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -117,6 +118,12 @@ if (!empty($user['ProfilePictureURL']) && !file_exists('../' . $user['ProfilePic
                     </li>
                 </ul>
             </div>
+             <div class="logout-section">
+            <a href="#" class="logout-link">
+                <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
+                <span class="menu-label">Log Out</span>
+            </a>
+        </div>
         </aside>
 
         <!-- MAIN CONTENT -->
