@@ -302,4 +302,31 @@ body {
     .reservation-card h1 {
         font-size: 1.5rem;
     }
+
+    .search-container {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+}
+
+.search-bar {
+    width: 350px;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--color-border-hr);
+    background: white;
+    font-size: 15px;
+    outline: none;
+    color: var(--color-text-primary);
+}
+
+.search-bar::placeholder {
+    color: var(--color-text-placeholder);
+}
+
+.search-bar:focus {
+    border-color: var(--color-hover-primary);
+    box-shadow: 0 0 5px rgba(105, 92, 254, 0.4);
+}
+
 }

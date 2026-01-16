@@ -43,6 +43,10 @@ $res_sql = "SELECT
             ORDER BY r.status DESC, r.id DESC";
 
 $reservations = $conn->query($res_sql);
+
+// fetch facilities for dropdown
+$facility_sql = "SELECT DISTINCT facility_name FROM reservations ORDER BY facility_name ASC";
+$facility_list = $conn->query($facility_sql);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -71,38 +75,12 @@ $reservations = $conn->query($res_sql);
             </header>
 
             <div class="sidebar-content">
-                <!-- Menu List -->
                 <ul class="menu-list">
-                    <li class="menu-item">
-                        <a href="overview.php" class="menu-link">
-                            <img src="../asset/home.png" alt="Home Icon" class="menu-icon">
-                            <span class="menu-label">Overview</span>
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="reserverequests.php" class="menu-link">
-                            <img src="../asset/makeareservation.png" alt="Make a Reservation Icon" class="menu-icon">
-                            <span class="menu-label">Requests</span>
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="reservations.php" class="menu-link">
-                            <img src="../asset/reservations.png" alt="Reservations Icon" class="menu-icon">
-                            <span class="menu-label">Reservations</span>
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="#" class="menu-link">
-                            <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
-                            <span class="menu-label">My Account</span>
-                        </a>
-                    </li>
-                    <li class="menu-item">
-                        <a href="create-account.php" class="menu-link">
-                            <img src="../asset/profile.png" alt="My Account Icon" class="menu-icon">
-                            <span class="menu-label">Create Account</span>
-                        </a>
-                    </li>
+                    <li class="menu-item"><a href="overview.php" class="menu-link"><img src="../asset/home.png"><span class="menu-label">Overview</span></a></li>
+                    <li class="menu-item"><a href="reserverequests.php" class="menu-link"><img src="../asset/makeareservation.png"><span class="menu-label">Requests</span></a></li>
+                    <li class="menu-item"><a href="reservations.php" class="menu-link"><img src="../asset/reservations.png"><span class="menu-label">Reservations</span></a></li>
+                    <li class="menu-item"><a href="#" class="menu-link"><img src="../asset/profile.png"><span class="menu-label">My Account</span></a></li>
+                    <li class="menu-item"><a href="create-account.php" class="menu-link"><img src="../asset/profile.png"><span class="menu-label">Create Account</span></a></li>
                 </ul>
             </div>
         </aside>
@@ -111,28 +89,53 @@ $reservations = $conn->query($res_sql);
         <div class="main-content">
             <div class="reservation-card">
                 <div class="page-header">
-                Approved & Rejected Reservations
+                    Approved & Rejected Reservations
                 </div>
                 <div class="container mt-5">
 
-
                     <?php if ($message): ?>
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <h5>
-                            <?php echo $message; ?>
-                        </h5>
+                        <h5><?php echo $message; ?></h5>
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                     <?php endif; ?>
 
                     <div class="alert alert-info">
-                        These are all reservations that have been <strong>approved</strong> or
-                        <strong>rejected</strong>.
+                        These are all reservations that have been <strong>approved</strong> or <strong>rejected</strong>.
                         You may delete them to remove from this list.
                     </div>
 
+                    <!-- Search Bar -->
+                    <div class="search-container mb-3">
+                        <input type="text" id="searchInput" class="form-control search-bar" placeholder="Search...">
+                    </div>
+
+                    <div class="row mb-3">
+
+                        <!-- Facility Filter -->
+                        <div class="col-md-6">
+                            <select id="facilityFilter" class="form-select">
+                                <option value="">All Facilities</option>
+                                <?php while ($f = $facility_list->fetch_assoc()): ?>
+                                    <option value="<?= htmlspecialchars($f['facility_name']); ?>">
+                                        <?= htmlspecialchars($f['facility_name']); ?>
+                                    </option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <select id="statusFilter" class="form-select">
+                                <option value="">All Status</option>
+                                <option value="approved">Approved</option>
+                                <option value="rejected">Rejected</option>
+                            </select>
+                        </div>
+
+                    </div>
+
                     <div class="table-responsive mt-3">
-                        <table class="table table-bordered">
+                        <table class="table table-bordered" id="reservationTable">
                             <thead class="table-dark">
                                 <tr>
                                     <th>ID</th>
@@ -148,58 +151,36 @@ $reservations = $conn->query($res_sql);
                             <tbody>
                                 <?php while ($row = $reservations->fetch_assoc()): ?>
                                 <tr>
-                                    <td>
-                                        <?php echo $row['id']; ?>
-                                    </td>
-                                    <td>
-                                        <?php echo htmlspecialchars($row['facility_name']); ?>
-                                    </td>
-                                    <td>
-                                        <?php echo htmlspecialchars($row['phone']); ?>
-                                    </td>
-
+                                    <td><?php echo $row['id']; ?></td>
+                                    <td><?php echo htmlspecialchars($row['facility_name']); ?></td>
+                                    <td><?php echo htmlspecialchars($row['phone']); ?></td>
                                     <td>
                                         <?php
-                                echo date('M d, Y', strtotime($row['event_start_date']));
-                                if ($row['event_start_date'] != $row['event_end_date']) {
-                                    echo " - " . date('M d, Y', strtotime($row['event_end_date']));
-                                }
-                                ?>
+                                            echo date('M d, Y', strtotime($row['event_start_date']));
+                                            if ($row['event_start_date'] != $row['event_end_date']) {
+                                                echo " - " . date('M d, Y', strtotime($row['event_end_date']));
+                                            }
+                                        ?>
                                     </td>
-
                                     <td>
-                                        <?php
-                                echo date('g:i A', strtotime($row['time_start'])) . " - " .
-                                     date('g:i A', strtotime($row['time_end']));
-                                ?>
+                                        <?php echo date('g:i A', strtotime($row['time_start'])) . " - " . date('g:i A', strtotime($row['time_end'])); ?>
                                     </td>
-
-                                    <td>
-                                        <?php echo $row['FirstName'] . " " . $row['LastName']; ?>
-                                    </td>
-
+                                    <td><?php echo $row['FirstName'] . " " . $row['LastName']; ?></td>
                                     <td>
                                         <?php if (strtolower($row['status']) === 'approved'): ?>
-                                        <span class="badge bg-success">
-                                            <?php echo ucfirst($row['status']); ?>
-                                        </span>
+                                        <span class="badge bg-success"><?php echo ucfirst($row['status']); ?></span>
                                         <?php else: ?>
-                                        <span class="badge bg-danger">
-                                            <?php echo ucfirst($row['status']); ?>
-                                        </span>
+                                        <span class="badge bg-danger"><?php echo ucfirst($row['status']); ?></span>
                                         <?php endif; ?>
                                     </td>
-
                                     <td>
-                                        <form method="POST" class="d-inline"
-                                            onsubmit="return confirm('Are you sure you want to delete this reservation?');">
-                                            <input type="hidden" name="reservation_id"
-                                                value="<?php echo $row['id']; ?>"> <button type="submit"
-                                                name="delete_reservation" class="btn btn-danger btn-sm"
-                                                title="Delete Reservation"> <span class="material-symbols-outlined"
-                                                    style="font-size: 18px; vertical-align: middle;">delete</span>
-                                                Delete </button> </form>
-
+                                        <form method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete this reservation?');">
+                                            <input type="hidden" name="reservation_id" value="<?php echo $row['id']; ?>">
+                                            <button type="submit" name="delete_reservation" class="btn btn-danger btn-sm">
+                                                <span class="material-symbols-outlined" style="font-size: 18px; vertical-align: middle;">delete</span>
+                                                Delete
+                                            </button>
+                                        </form>
                                     </td>
                                 </tr>
                                 <?php endwhile; ?>
@@ -208,25 +189,48 @@ $reservations = $conn->query($res_sql);
                     </div>
 
                 </div>
-
-            </div> <!-- END sidebar-content -->
+            </div> 
         </div>
-    </div> <!-- END app-layout -->
-    <script src="../resident-side/javacript/sidebar.js"></script>
+    </div>
 
-
-
-
-    <!-- SWAL IMPORT LINK -->
-   
-
+    <script src="../resident-side/javascript/sidebar.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
+    <!-- search and filter -->
+    <script>
+    function applyFilters() {
+        let search = document.getElementById('searchInput').value.toLowerCase();
+        let facility = document.getElementById('facilityFilter').value.toLowerCase();
+        let status = document.getElementById('statusFilter').value.toLowerCase();
+
+        let rows = document.querySelectorAll("#reservationTable tbody tr");
+
+        rows.forEach(row => {
+            let facilityText = row.children[1].textContent.toLowerCase();
+            let phoneText = row.children[2].textContent.toLowerCase();
+            let userText = row.children[5].textContent.toLowerCase();
+            let statusText = row.children[6].textContent.toLowerCase();
+
+            let matchesSearch = (
+                facilityText.includes(search) ||
+                phoneText.includes(search) ||
+                userText.includes(search) ||
+                statusText.includes(search)
+            );
+
+            let matchesFacility = facility === "" || facilityText.includes(facility);
+            let matchesStatus = status === "" || statusText === status;
+
+            row.style.display = (matchesSearch && matchesFacility && matchesStatus) ? "" : "none";
+        });
+    }
+
+    document.getElementById('searchInput').addEventListener('keyup', applyFilters);
+    document.getElementById('facilityFilter').addEventListener('change', applyFilters);
+    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+    </script>
+
 </body>
-
- <script src="../resident-side/javascript/sidebar.js"></script>
-
-
 </html>
 
 <?php $conn->close(); ?>
