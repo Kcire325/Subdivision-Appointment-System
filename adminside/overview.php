@@ -86,7 +86,6 @@ $result = $conn->query($sql);
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
                     <h1>Admin Dashboard - Active Residents</h1>
-                    <p class="text-muted">Logged in as: <?php echo $_SESSION['firstName'] . ' ' . $_SESSION['lastName']; ?> (Admin)</p>
                 </div>
                 <form action ="log-out.php" method="post">
                     <button type="submit" class="btn btn-danger">Logout</button>

@@ -122,8 +122,9 @@ if (!empty($user['ProfilePictureURL']) && !file_exists('../' . $user['ProfilePic
         <!-- MAIN CONTENT -->
         <div class="main-content">
             <div class="reservation-card">
-
-                <div class="page-header mb-3">My Account</div>
+                <div class="page-header">
+                    My Account
+                    </div>
                 <div class="card-body">
                     <div class="row g-4">
 

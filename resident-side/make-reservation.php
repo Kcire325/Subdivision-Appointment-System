@@ -13,8 +13,8 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="make-reservation.css">
-    <link rel="stylesheet" href="style/side-navigation.css">
+    <link rel="stylesheet" href="make-reservation1.css">
+    <link rel="stylesheet" href="style/side-navigation1.css">
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 

@@ -229,7 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link href="https://getbootstrap.com/docs/5.3/assets/css/docs.css" rel="stylesheet">
     <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-    <link rel="stylesheet" href="admin.css">
+    <link rel="stylesheet" href="create-account.css">
     <title>Create Account</title>
 </head>
 
@@ -285,12 +285,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <!-- MAIN CONTENT -->
     <div class="main-content">
 
-        <div class="reservation-card container-fluid px-5" 
-             style="background: #fff; padding: 35px 60px; border-radius: 12px; 
-                    box-shadow: 0 2px 12px rgba(0,0,0,0.12); max-width: 1350px; margin: 30px auto;">
-            <div class="page-header mb-4" 
-                 style="width: 100%; display: block; font-size: 1.9rem; font-weight: 600; 
-                        border-bottom: 2px solid #ddd; padding-bottom: 15px; margin-bottom: 40px;">
+        <div class="reservation-card">
+            <div class="page-header">
                 Create Account
             </div>
 

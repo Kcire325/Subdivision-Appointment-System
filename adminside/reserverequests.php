@@ -145,8 +145,8 @@ if (!$reservations) {
 
   <!-- MAIN CONTENT -->
     <div class="main-content">
-        <div class="reservation-card p-4" style="background: #fff; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
-            <div class="page-header mb-4" style="font-size: 2rem; font-weight: 600; border-bottom: 2px solid #ddd; padding-bottom: 15px;">
+        <div class="reservation-card" >
+            <div class="page-header">
                 Pending Reservations
             </div>
 
