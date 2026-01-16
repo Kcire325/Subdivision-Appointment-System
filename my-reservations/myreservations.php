@@ -124,7 +124,7 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </ul>
         </div>
          <div class="logout-section">
-            <a href="#" class="logout-link">
+            <a  href="../adminside/log-out.php" method="post" class="logout-link">
                 <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
                 <span class="menu-label">Log Out</span>
             </a>

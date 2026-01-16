@@ -34,7 +34,10 @@ body {
     transition: width 0.4s ease;
     display: flex;
     flex-direction: column;
-    
+}
+
+.sidebar form {
+    margin-top: auto;
 }
 
 .sidebar.collapsed {
@@ -180,11 +183,12 @@ body {
     border-radius: 8px;
     color: var(--color-text-primary);
     transition: 0.3s ease;
+    background: transparent;
 }
 
 .logout-link:hover {
     color: black;
-    background-color: white;
+    
 }
 
 .logout-link:hover img {

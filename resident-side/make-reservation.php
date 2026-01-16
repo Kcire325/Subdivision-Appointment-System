@@ -79,9 +79,9 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                         </a>
                     </li>
                 </ul>
-            </div>  
+            </div>
             <div class="logout-section">
-            <a href="#" class="logout-link">
+            <a  href="../adminside/log-out.php" method="post" class="logout-link">
                 <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
                 <span class="menu-label">Log Out</span>
             </a>
@@ -133,7 +133,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                         <img src="../asset/chapel.png" class="card-img-top" alt="chapel">
                                         <div class="card-body content">
                                             <h5 class="card-title">Chapel</h5>
-                                            <p class="card-text">The Catholic Chapel provides a peaceful and sacred venue for weddings, baptisms, thanksgiving masses, memorial services, and other religious ceremonies. Its calm atmosphere makes it suitable for a wide range of spiritual events.</p>
+                                            <p class="card-text">The Catholic Chapel provides a peaceful and sacred
+                                                venue for weddings, baptisms, thanksgiving masses, memorial services,
+                                                and other religious ceremonies. Its calm atmosphere makes it suitable
+                                                for a wide range of spiritual events.</p>
                                         </div>
                                     </div>
                                 </a>
@@ -144,7 +147,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                         <img src="../asset/basketball.png" class="card-img-top" alt="basketball">
                                         <div class="card-body content">
                                             <h5 class="card-title">Basketball Court</h5>
-                                            <p class="card-text">The basketball court is a full-size area designed for games, practice sessions, sports events, and friendly tournaments. Its open layout supports smooth play and allows for organized or recreational basketball activities.</p>
+                                            <p class="card-text">The basketball court is a full-size area designed for
+                                                games, practice sessions, sports events, and friendly tournaments. Its
+                                                open layout supports smooth play and allows for organized or
+                                                recreational basketball activities.</p>
                                         </div>
                                     </div>
                                 </a>
@@ -155,7 +161,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                         <img src="../asset/multi-purpose.png" class="card-img-top" alt="hall">
                                         <div class="card-body content">
                                             <h5 class="card-title">Multipurpose Hall</h5>
-                                            <p class="card-text">The multipurpose hall offers a flexible and spacious venue for meetings, parties, events, workshops, and community programs. Its adaptable layout makes it suitable for a wide range of gatherings and organized activities.</p>
+                                            <p class="card-text">The multipurpose hall offers a flexible and spacious
+                                                venue for meetings, parties, events, workshops, and community programs.
+                                                Its adaptable layout makes it suitable for a wide range of gatherings
+                                                and organized activities.</p>
                                         </div>
                                     </div>
                                 </a>
@@ -166,7 +175,10 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
                                         <img src="../asset/tennis-court.png" class="card-img-top" alt="tennis">
                                         <div class="card-body content">
                                             <h5 class="card-title">Tennis Court</h5>
-                                            <p class="card-text">The tennis court provides a smooth and well-maintained surface for tennis matches and practice. It forms part of the recreational area in the subdivision and is ideal for outdoor activities, fitness, and leisure play.</p>
+                                            <p class="card-text">The tennis court provides a smooth and well-maintained
+                                                surface for tennis matches and practice. It forms part of the
+                                                recreational area in the subdivision and is ideal for outdoor
+                                                activities, fitness, and leisure play.</p>
                                         </div>
                                     </div>
                                 </a>
@@ -435,11 +447,11 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Resident') {
 
     <!-- Bootstrap 5 JS (with Popper included) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
     <!-- Other JS -->
-     <script src="javascript/reservation.js"></script>
+    <script src="javascript/reservation.js"></script>
     <script src="javascript/sidebar.js"></script>
     <script src="javascript/progress-btn.js"></script>
 
