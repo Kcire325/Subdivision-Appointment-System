@@ -1,7 +1,6 @@
 <?php
 session_start();
 
-// Database connection
 $conn = new mysqli("localhost", "root", "", "facilityreservationsystem");
 
 if ($conn->connect_error) {
@@ -10,13 +9,13 @@ if ($conn->connect_error) {
 
 $message = "";
 
-// ----------------------
-// NEW: Handle Approve/Reject buttons
-// ----------------------
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['approve_reservation']) || isset($_POST['reject_reservation'])) {
         $reservation_id = intval($_POST['reservation_id']);
         $new_status = isset($_POST['approve_reservation']) ? 'approved' : 'rejected';
+        $admin_id = $_SESSION['user_id'];
+        
+        $conn->query("SET @current_admin_id = $admin_id");
         
         $stmt = $conn->prepare("UPDATE reservations SET status = ? WHERE id = ?");
         $stmt->bind_param("si", $new_status, $reservation_id);
@@ -29,9 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-// ----------------------
-// EXISTING: Handle hide reservation (optional, still works)
-// ----------------------
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_reservation'])) {
     $reservation_id = intval($_POST['reservation_id']);
     
@@ -43,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['delete_reservation']))
     }
     $message = "Reservation removed from view.";
 }
-// Build the WHERE clause to exclude hidden reservations
+
 $hidden_ids = isset($_SESSION['hidden_reservations']) ? $_SESSION['hidden_reservations'] : [];
 $hidden_clause = "";
 if (!empty($hidden_ids)) {
@@ -51,14 +47,12 @@ if (!empty($hidden_ids)) {
     $hidden_clause = " AND r.id NOT IN ($hidden_ids_str)";
 }
 
-// Check if "notes" column exists
 $notes_column_exists = false;
 $result = $conn->query("SHOW COLUMNS FROM reservations LIKE 'notes'");
 if ($result && $result->num_rows > 0) {
     $notes_column_exists = true;
 }
 
-// Fetch ONLY pending reservations
 $res_sql = "SELECT
                 r.id,
                 r.facility_name,
@@ -97,7 +91,6 @@ if (!$reservations) {
 <body>
 <div class="app-layout">
 
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <header class="sidebar-header">
             <img src="../asset/logo.png" alt="Header Logo" class="header-logo">
@@ -107,7 +100,6 @@ if (!$reservations) {
         </header>
 
         <div class="sidebar-content">
-            <!-- Menu List -->
             <ul class="menu-list">
                 <li class="menu-item">
                     <a href="overview.php" class="menu-link">
@@ -143,7 +135,6 @@ if (!$reservations) {
         </div>
     </aside>
 
-  <!-- MAIN CONTENT -->
     <div class="main-content">
         <div class="reservation-card" >
             <div class="page-header">
@@ -234,7 +225,7 @@ if (!$reservations) {
             </div>
         </div>
     </div>
-</div> <!-- END app-layout -->
+</div>
 <script src="../resident-side/javascript/sidebar.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
