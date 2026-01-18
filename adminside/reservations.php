@@ -1,6 +1,21 @@
 <?php
 session_start();
 
+// Prevent page caching
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Cache-Control: post-check=0, pre-check=0", false);
+header("Pragma: no-cache");
+header("Expires: Sat, 26 Jul 1997 05:00:00 GMT");
+
+if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Admin') {
+    header("Location: ../login/login.php");
+    exit();
+}
+
+$conn = new mysqli("localhost", "root", "", "facilityreservationsystem");
+if ($conn->connect_error) {
+    die("Connection failed: " . $conn->connect_error);
+}
 // Database connection
 $conn = new mysqli("localhost", "root", "", "facilityreservationsystem");
 if ($conn->connect_error) {
@@ -58,119 +73,7 @@ while($f = $facility_list->fetch_assoc()) { $facilities_array[] = $f['facility_n
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
 <link rel="stylesheet" href="adminside.css">
 <link rel="stylesheet" href="../resident-side/style/side-navigation1.css">
-
-<style>
-/* Search bar styling */
-.search-bar {
-    height: 38px;
-    font-size: 0.9rem;
-    width: 250px;
-}
-
-/* Container for search + filter row */
-.search-filter-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-/* Filter dropdown container */
-.filter-dropdown {
-    position: relative;
-    display: inline-block;
-}
-
-#filterButton {
-    height: 38px;
-    min-width: 120px;
-}
-
-/* Dropdown menu styling */
-.filter-menu {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 100%;
-    margin-top: 5px;
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    min-width: 280px;
-    max-height: 400px;
-    overflow-y: auto;
-    z-index: 1000;
-    padding: 15px;
-}
-
-.filter-menu.show {
-    display: block;
-}
-
-.filter-section {
-    margin-bottom: 15px;
-}
-
-.filter-section:last-child {
-    margin-bottom: 0;
-}
-
-.filter-section h6 {
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-bottom: 10px;
-    color: #333;
-    border-bottom: 1px solid #eee;
-    padding-bottom: 5px;
-}
-
-.filter-option {
-    display: flex;
-    align-items: center;
-    padding: 6px 8px;
-    margin: 4px 0;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.filter-option:hover {
-    background-color: #f0f0f0;
-}
-
-.filter-option input[type="checkbox"] {
-    margin-right: 10px;
-    cursor: pointer;
-}
-
-.filter-option label {
-    cursor: pointer;
-    margin: 0;
-    flex: 1;
-    user-select: none;
-}
-
-.filter-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 15px;
-    padding-top: 15px;
-    border-top: 1px solid #eee;
-}
-
-.filter-actions button {
-    flex: 1;
-    font-size: 0.85rem;
-    padding: 6px 12px;
-}
-
-/* Table styling improvements */
-.table tbody tr:hover {
-    background-color: #f1f1f1;
-    transition: background-color 0.2s;
-}
-</style>
+<link rel="stylesheet" href="reservations-filter.css">
 </head>
 
 <body>
@@ -195,7 +98,7 @@ while($f = $facility_list->fetch_assoc()) { $facilities_array[] = $f['facility_n
             </ul>
         </div>
         <div class="logout-section">
-            <a  href="../adminside/log-out.php" method="post" class="logout-link">
+            <a  href="log-out.php" method="post" class="logout-link">
                 <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
                 <span class="menu-label">Log Out</span>
             </a>
@@ -352,6 +255,24 @@ const clearButton = document.getElementById('clearFilters');
 filterButton.addEventListener('click', function(e) {
     e.stopPropagation();
     filterMenu.classList.toggle('show');
+    
+    // Position the dropdown below the button
+    if (filterMenu.classList.contains('show')) {
+        const rect = filterButton.getBoundingClientRect();
+        const dropdownHeight = 500; // max-height from CSS
+        const spaceBelow = window.innerHeight - rect.bottom;
+        
+        // If not enough space below, position above the button
+        if (spaceBelow < dropdownHeight && rect.top > dropdownHeight) {
+            filterMenu.style.bottom = (window.innerHeight - rect.top + 5) + 'px';
+            filterMenu.style.top = 'auto';
+        } else {
+            filterMenu.style.top = (rect.bottom + 5) + 'px';
+            filterMenu.style.bottom = 'auto';
+        }
+        
+        filterMenu.style.left = (rect.right - 280) + 'px'; // Align right edge with button
+    }
 });
 
 // Close dropdown when clicking outside
