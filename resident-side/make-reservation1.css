@@ -36,7 +36,6 @@ body {
     max-width: 1800px;
     width: 100%;
     align-items: center;
-    
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
     padding: 0px;
 }
@@ -298,13 +297,14 @@ body {
 .calendar-wrapper {
     background: white;
     border-radius: 12px;
-   
 }
 
 #calendar {
     border-radius: 12px;
     overflow: hidden;
     padding:0;
+    
+    
 }
 
 /* FullCalendar Customization */
