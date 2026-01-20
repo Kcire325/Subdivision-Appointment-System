@@ -37,6 +37,17 @@ $upcoming_count = $upcoming_query->fetch_assoc()['total'];
 $total_accounts_query = $conn->query("SELECT COUNT(*) AS total FROM users WHERE Status='Active'");
 $total_accounts = $total_accounts_query->fetch_assoc()['total'];
 
+// FETCH STATUS DATA FOR CHART
+$status_query = $conn->query("
+    SELECT 
+        SUM(CASE WHEN status='approved' THEN 1 ELSE 0 END) AS approved,
+        SUM(CASE WHEN status='rejected' THEN 1 ELSE 0 END) AS rejected,
+        SUM(CASE WHEN status='pending' THEN 1 ELSE 0 END) AS pending
+    FROM reservations 
+    WHERE admin_visible = 1
+");
+$status_data = $status_query->fetch_assoc();
+
 // Recent activity log
 $recent_audit_sql = "SELECT * FROM v_audit_logs_detailed ORDER BY Timestamp DESC LIMIT 10";
 $recent_audit_result = $conn->query($recent_audit_sql);
@@ -52,22 +63,24 @@ $pending_requests_result = $conn->query($pending_requests_sql);
 ?>
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - Dashboard</title>
 
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
-<link rel="stylesheet" href="overview.css">
- <link rel="stylesheet" href="../resident-side/style/side-navigation1.css">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <link rel="stylesheet" href="overview.css">
+    <link rel="stylesheet" href="../resident-side/style/side-navigation1.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 
 <body>
-<div class="app-layout">
+    <div class="app-layout">
 
-    <!-- SIDEBAR -->
+        <!-- SIDEBAR -->
         <aside class="sidebar">
             <header class="sidebar-header">
                 <div class="profile-section">
@@ -124,39 +137,51 @@ $pending_requests_result = $conn->query($pending_requests_sql);
             </div>
         </aside>
 
-    <!-- MAIN CONTENT -->
-    <div class="main-content">
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
 
-        <!-- DASHBOARD TITLE + LOGOUT + CARDS -->
-        <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
-            <h1 class="mb-0">Admin Dashboard</h1>
-        </div>
+            <!-- DASHBOARD TITLE + LOGOUT + CARDS -->
+            <div class="d-flex justify-content-between align-items-center mb-4 mt-3">
+                <h1 class="mb-0">Admin Dashboard</h1>
+            </div>
 
-        <div class="row g-3 mb-4">
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm">
-                    <h6 class="text-muted">Pending Requests</h6>
-                    <h2><?php echo $pending_count; ?></h2>
+            <div class="row g-3 mb-4">
+                <div class="col-md-4">
+                    <div class="card p-3 shadow-sm">
+                        <h6 class="text-muted">Pending Requests</h6>
+                        <h2>
+                            <?php echo $pending_count; ?>
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card p-3 shadow-sm">
+                        <h6 class="text-muted">Upcoming Events</h6>
+                        <h2>
+                            <?php echo $upcoming_count; ?>
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card p-3 shadow-sm">
+                        <h6 class="text-muted">Total Accounts</h6>
+                        <h2>
+                            <?php echo $total_accounts; ?>
+                        </h2>
+                    </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm">
-                    <h6 class="text-muted">Upcoming Events</h6>
-                    <h2><?php echo $upcoming_count; ?></h2>
-                </div>
+            <!-- CHART SECTION -->
+            <div class="card p-3 shadow-sm mb-4">
+                <h5 class="mb-3">Reservation Status Overview</h5>
+                <canvas id="myChart" style="max-height: 400px;"></canvas>
             </div>
 
-            <div class="col-md-4">
-                <div class="card p-3 shadow-sm">
-                    <h6 class="text-muted">Total Accounts</h6>
-                    <h2><?php echo $total_accounts; ?></h2>
-                </div>
-            </div>
-        </div>
-
-        <!-- RECENT ACTIVITY CARD -->
-        <?php if ($recent_audit_result && $recent_audit_result->num_rows > 0): ?>
+            <!-- RECENT ACTIVITY CARD -->
+            <?php if ($recent_audit_result && $recent_audit_result->num_rows > 0): ?>
             <div class="card recent-activity-card mt-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Recent Activity</h5>
@@ -164,7 +189,7 @@ $pending_requests_result = $conn->query($pending_requests_sql);
                 </div>
                 <div class="card-body p-3">
                     <?php while($log = $recent_audit_result->fetch_assoc()): ?>
-                        <?php
+                    <?php
                             $bgClass = 'bg-success';
                             $iconSymbol = 'check_circle';
                             $actionText = '';
@@ -183,46 +208,74 @@ $pending_requests_result = $conn->query($pending_requests_sql);
                             $timeRange = ($log['TimeStart'] && $log['TimeEnd']) ? date('g:i A', strtotime($log['TimeStart'])) . ' - ' . date('g:i A', strtotime($log['TimeEnd'])) : '';
                             $timestamp = date('F d, Y \a\t g:i A', strtotime($log['Timestamp']));
                         ?>
-                        <div class="d-flex align-items-start audit-entry <?= $bgClass ?> bg-opacity-10 border border-<?= str_replace('bg-', '', $bgClass); ?>">
-                            <div class="me-2 mt-1">
-                                <span class="material-symbols-outlined text-white bg-<?= str_replace('bg-', '', $bgClass); ?> rounded-circle d-flex align-items-center justify-content-center">
-                                    <?= $iconSymbol ?>
-                                </span>
+                    <div
+                        class="d-flex align-items-start audit-entry <?= $bgClass ?> bg-opacity-10 border border-<?= str_replace('bg-', '', $bgClass); ?>">
+                        <div class="me-2 mt-1">
+                            <span
+                                class="material-symbols-outlined text-white bg-<?= str_replace('bg-', '', $bgClass); ?> rounded-circle d-flex align-items-center justify-content-center">
+                                <?= $iconSymbol ?>
+                            </span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-bold">
+                                <?= htmlspecialchars($adminName); ?>
+                                <?= $actionText; ?> a reservation request
                             </div>
-                            <div class="flex-grow-1">
-                                <div class="fw-bold"><?= htmlspecialchars($adminName); ?> <?= $actionText; ?> a reservation request</div>
-                                <div class="text-muted small"><?= htmlspecialchars($timestamp); ?></div>
-                                <div class="small">
-                                    <span><strong>Resident:</strong> <?= htmlspecialchars($residentName); ?></span><br>
-                                    <span><strong>Facility:</strong> <?= htmlspecialchars($facilityName); ?></span><br>
-                                    <span><strong>Date:</strong> <?= htmlspecialchars($eventDate); ?></span>
-                                    <?php if ($timeRange): ?>
-                                        <br><span><strong>Time:</strong> <?= htmlspecialchars($timeRange); ?></span>
-                                    <?php endif; ?>
-                                </div>
+                            <div class="text-muted small">
+                                <?= htmlspecialchars($timestamp); ?>
+                            </div>
+                            <div class="small">
+                                <span><strong>Resident:</strong>
+                                    <?= htmlspecialchars($residentName); ?>
+                                </span><br>
+                                <span><strong>Facility:</strong>
+                                    <?= htmlspecialchars($facilityName); ?>
+                                </span><br>
+                                <span><strong>Date:</strong>
+                                    <?= htmlspecialchars($eventDate); ?>
+                                </span>
+                                <?php if ($timeRange): ?>
+                                <br><span><strong>Time:</strong>
+                                    <?= htmlspecialchars($timeRange); ?>
+                                </span>
+                                <?php endif; ?>
                             </div>
                         </div>
+                    </div>
                     <?php endwhile; ?>
                 </div>
             </div>
-        <?php else: ?>
+            <?php else: ?>
             <div class="card mt-4">
-                <div class="card-header"><h5 class="mb-0">Recent Activity</h5></div>
+                <div class="card-header">
+                    <h5 class="mb-0">Recent Activity</h5>
+                </div>
                 <div class="card-body">
                     <div class="alert alert-info mb-0">No recent activity found.</div>
                 </div>
             </div>
-        <?php endif; ?>
+            <?php endif; ?>
 
-    </div> <!-- END MAIN CONTENT -->
+        </div> <!-- END MAIN CONTENT -->
 
-</div> <!-- END APP-LAYOUT -->
+    </div> <!-- END APP-LAYOUT -->
 
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"></script>
-<script src="../resident-side/javascript/sidebar.js"></script>
+    <script>
+        // Pass PHP data to JavaScript
+        const chartData = {
+            approved: <?php echo $status_data['approved'] ?? 0; ?>,
+            rejected: <?php echo $status_data['rejected'] ?? 0; ?>,
+            pending: <?php echo $status_data['pending'] ?? 0; ?>
+        };
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.8/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"></script>
+    <script src="../resident-side/javascript/chart.js"></script>
+    <script src="../resident-side/javascript/sidebar.js"></script>
+
 
 </body>
+
 </html>
 
 <?php
