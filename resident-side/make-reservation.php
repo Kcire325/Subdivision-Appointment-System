@@ -316,13 +316,19 @@ $userName = htmlspecialchars(trim($user['FirstName'] . ' ' . $user['LastName']))
 
                                     <!-- Phone Number -->
                                     <div class="form-group mb-3">
-                                        <label for="phone">Phone Number: <span class="text-danger">*</span></label>
-                                        <input type="text" class="form-control" id="phone" placeholder="09123456789"
-                                            maxlength="11" required>
-                                        <div class="invalid-feedback" id="phoneFeedback" style="display: none;">
-                                            Please enter numbers only (10-11 digits).
-                                        </div>
-                                    </div>
+    <label for="phone">Phone Number: <span class="text-danger">*</span></label>
+    <input type="text" 
+        class="form-control" 
+        id="phone" 
+        name="phone"
+        placeholder="09123456789"
+        maxlength="11"
+        pattern="^09\d{9}$"
+        required>
+    <div class="invalid-feedback" id="phoneFeedback">
+        Please enter a valid Philippine mobile number (e.g., 09123456789)
+    </div>
+</div>
 
                                     <!-- Time Slots -->
                                     <div class="form-group mb-3">

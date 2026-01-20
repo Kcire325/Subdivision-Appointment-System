@@ -29,6 +29,50 @@ $(document).ready(function () {
     $('.card-link').on('click', function (e) {
         e.preventDefault();
 
+        var clickedFacility = $(this).data('facility');
+        
+        // Check if user already has a complete reservation with a different facility
+        if (isReservationComplete() && reservationData.facility !== clickedFacility) {
+            Swal.fire({
+                icon: "warning",
+                title: "Change Facility?",
+                html: "You already have a complete booking for <strong>" + reservationData.facility + "</strong>.<br>" +
+                      "Changing the facility will clear your current reservation.<br><br>" +
+                      "Do you want to change to <strong>" + clickedFacility + "</strong>?",
+                showCancelButton: true,
+                confirmButtonText: "Yes, Change Facility",
+                cancelButtonText: "No, Keep Current",
+                confirmButtonColor: "#ff6b6b"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Clear the complete reservation
+                    tempCalendarEvent = null;
+                    reservationData = {
+                        facility: clickedFacility,
+                        date: '',
+                        timeStart: '',
+                        timeEnd: '',
+                        phone: '',
+                        note: '',
+                        totalCost: 0
+                    };
+                    
+                    // Update UI
+                    $('.col').removeClass('selected');
+                    $(this).parent().addClass('selected');
+                    selectedFacility = clickedFacility;
+                    
+                    // Update summary and reload calendar
+                    updateSummaryDisplay();
+                    load_events();
+                    checkNextButtonState();
+                }
+                // If cancelled, do nothing - keep current facility selected
+            });
+            return;
+        }
+
+        // Normal facility selection (no complete reservation exists, or same facility clicked)
         // Remove selected class from all
         $('.col').removeClass('selected');
 
@@ -36,7 +80,7 @@ $(document).ready(function () {
         $(this).parent().addClass('selected');
 
         // Store facility name globally
-        selectedFacility = $(this).data('facility');
+        selectedFacility = clickedFacility;
 
         // Update reservation data
         reservationData.facility = selectedFacility;
@@ -80,7 +124,7 @@ $(document).ready(function () {
         checkModalFormCompletion();
     });
 
-    // Phone number validation - MODIFIED to use temp data
+    // Phone number validation - MODIFIED for Philippine numbers
     $('#phone').on('input', function () {
         var value = $(this).val();
 
@@ -89,19 +133,19 @@ $(document).ready(function () {
         $(this).val(cleaned);
 
         // Validate phone number
-        if (cleaned.length < 10 || cleaned.length > 11) {
-            $(this).addClass('is-invalid');
-            $('#phoneFeedback').show();
-        } else {
-            $(this).removeClass('is-invalid');
-            $('#phoneFeedback').hide();
-        }
+        validatePhoneNumber($(this), cleaned);
 
         // Store in TEMPORARY data (not reservationData yet)
         tempModalData.phone = cleaned;
         
         // Check if form is complete
         checkModalFormCompletion();
+    });
+
+    // Also validate on blur
+    $('#phone').on('blur', function () {
+        var cleaned = $(this).val();
+        validatePhoneNumber($(this), cleaned);
     });
 
     // Note field - MODIFIED to use temp data
@@ -174,27 +218,19 @@ $(document).ready(function () {
     $('#next, .btn-next').on('click', function(e) {
         var currentPage = getCurrentPage();
         
-        // Check if user can proceed from current page
-        if (!canProceedFromCurrentPage()) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            var message = "";
-            if (currentPage === 'select-facility') {
-                message = "Please select a facility before proceeding.";
-            } else if (currentPage === 'date-time') {
-                message = "Please select a date on the calendar and complete the booking form (phone number and time slot) before proceeding to payment.";
-            } else {
-                message = "Please complete all required fields before proceeding.";
+        // Only validate when trying to proceed FROM the date-time page TO payment
+        if (currentPage === 'date-time') {
+            if (!isReservationComplete()) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
             }
-            
-            Swal.fire({
-                icon: "warning",
-                title: "Cannot Proceed",
-                text: message,
-                confirmButtonText: "OK"
-            });
-            
+        }
+        
+        // For other pages (like select-facility), just check if Next button is enabled
+        // If it's enabled, allow navigation
+        if ($(this).prop('disabled')) {
+            e.preventDefault();
             return false;
         }
         
@@ -212,6 +248,46 @@ $(document).ready(function () {
         checkNextButtonState();
     }, 500);
 });
+
+/**
+ * Validate Philippine phone number
+ */
+function validatePhoneNumber($input, phone) {
+    var $feedback = $('#phoneFeedback');
+    
+    // Empty check
+    if (phone === '') {
+        $input.removeClass('is-valid is-invalid');
+        $feedback.hide();
+        return false;
+    }
+    
+    // Must be exactly 11 digits
+    if (phone.length !== 11) {
+        $input.addClass('is-invalid').removeClass('is-valid');
+        $feedback.text('Phone number must be 11 digits').show();
+        return false;
+    }
+    
+    // Must start with 09
+    if (!phone.startsWith('09')) {
+        $input.addClass('is-invalid').removeClass('is-valid');
+        $feedback.text('Phone number must start with 09').show();
+        return false;
+    }
+    
+    // Check for all same digits (e.g., 11111111111)
+    if (/^(\d)\1{10}$/.test(phone)) {
+        $input.addClass('is-invalid').removeClass('is-valid');
+        $feedback.text('Please enter a valid phone number').show();
+        return false;
+    }
+    
+    // Valid
+    $input.removeClass('is-invalid').addClass('is-valid');
+    $feedback.hide();
+    return true;
+}
 
 /**
  * NEW: Discard modal changes when closing without saving
@@ -530,7 +606,9 @@ function isReservationComplete() {
            reservationData.timeStart && 
            reservationData.timeEnd && 
            reservationData.phone &&
-           /^\d{10,11}$/.test(reservationData.phone);
+           reservationData.phone.length === 11 &&
+           reservationData.phone.startsWith('09') &&
+           !/^(\d)\1{10}$/.test(reservationData.phone);
 }
 
 /**
@@ -576,8 +654,8 @@ function checkModalFormCompletion() {
         missingFields.push("date");
     }
     
-    // Check phone
-    if (!phone || !/^\d{10,11}$/.test(phone)) {
+    // Check phone - must be 11 digits, start with 09, and not all same digits
+    if (!phone || phone.length !== 11 || !phone.startsWith('09') || /^(\d)\1{10}$/.test(phone)) {
         isComplete = false;
         missingFields.push("phone");
     }
@@ -709,11 +787,35 @@ function saveToPaymentSection() {
         return;
     }
 
-    if (!/^\d{10,11}$/.test(phone)) {
+    // Validate Philippine phone number format
+    if (phone.length !== 11) {
         Swal.fire({
             icon: "error",
             title: "Invalid Phone Number",
-            text: "Please enter a valid phone number (10–11 digits)."
+            text: "Phone number must be exactly 11 digits."
+        }).then(() => {
+            $("#phone").focus();
+        });
+        return;
+    }
+
+    if (!phone.startsWith('09')) {
+        Swal.fire({
+            icon: "error",
+            title: "Invalid Phone Number",
+            text: "Phone number must start with 09."
+        }).then(() => {
+            $("#phone").focus();
+        });
+        return;
+    }
+
+    // Check for repeated digits
+    if (/^(\d)\1{10}$/.test(phone)) {
+        Swal.fire({
+            icon: "error",
+            title: "Invalid Phone Number",
+            text: "Please enter a valid Philippine mobile number."
         }).then(() => {
             $("#phone").focus();
         });
@@ -908,7 +1010,7 @@ function clearModalForm() {
     $('.slot-btn').removeClass('selected');
 
     // Remove validation classes
-    $('#phone').removeClass('is-invalid');
+    $('#phone').removeClass('is-invalid is-valid');
     $('#phoneFeedback').hide();
     
     // Clear temporary modal data
@@ -1032,6 +1134,7 @@ function saveFinalReservation() {
             alert(errorMsg);
         }
     });
+    
 
     return false;
 }

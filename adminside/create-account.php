@@ -261,7 +261,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <img src="../asset/profile.jpg" alt="Profile" class="profile-photo">
         <div class="profile-info">
             <p class="profile-name">Name</p>
-            <p class="profile-role">Resident</p>
+            <p class="profile-role">Admin</p>
         </div>
     </div>
     <button class="sidebar-toggle">
