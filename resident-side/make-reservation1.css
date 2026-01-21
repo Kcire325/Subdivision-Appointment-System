@@ -636,6 +636,197 @@ body {
 
 /* ------------------- */
 
+/* PAYMENT */
+/* File Upload Styles */
+.upload-area {
+    border: 2px dashed #6cc4cc;
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    background: #f8f9fa;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.upload-area:hover {
+    border-color: #4fa8af;
+    background: #e8f4f5;
+}
+
+.upload-area.drag-over {
+    border-color: #2d8691;
+    background: #d4eef0;
+    border-style: solid;
+}
+
+.upload-area.has-file {
+    border-style: solid;
+    border-color: #28a745;
+    background: #f0f9f4;
+    padding: 20px;
+}
+
+.upload-icon {
+    color: #6cc4cc;
+    margin-bottom: 15px;
+}
+
+.upload-icon svg {
+    display: block;
+    margin: 0 auto;
+}
+
+.upload-text {
+    font-size: 18px;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.upload-subtext {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+/* Preview Styles */
+.upload-preview {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.preview-image-container {
+    width: 100%;
+    max-width: 400px;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.preview-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    max-height: 300px;
+    object-fit: contain;
+}
+
+.preview-info {
+    text-align: left;
+    width: 100%;
+    max-width: 400px;
+}
+
+.preview-filename,
+.preview-filesize {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #333;
+}
+
+.remove-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 8px 16px;
+    font-size: 14px;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.remove-file-btn:hover {
+    background-color: #c82333;
+    transform: translateY(-1px);
+}
+
+.remove-file-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Browser Button - keeping for compatibility */
+.browser-btn {
+    background: #6cc4cc;
+    color: white;
+    border: none;
+    padding: 12px 40px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 15px;
+}
+
+.browser-btn:hover {
+    background: #4fa8af;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(108, 196, 204, 0.3);
+}
+
+/* Payment section spacing */
+.payment-card {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.payment-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 15px;
+}
+
+.payment-instruction {
+    font-size: 15px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 25px;
+}
+
+.gcash-number {
+    font-weight: 600;
+    color: #6cc4cc;
+    font-size: 16px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .upload-area {
+        padding: 30px 15px;
+        min-height: 180px;
+    }
+    
+    .upload-icon svg {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .upload-text {
+        font-size: 16px;
+    }
+    
+    .preview-image-container {
+        max-width: 100%;
+    }
+    
+    .preview-image {
+        max-height: 250px;
+    }
+}
+
+/* ------------------------ */
+
 /* <---------   ---------> */
 @media (max-width: 576px) {
     .slots-container {

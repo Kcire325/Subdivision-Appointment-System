@@ -452,12 +452,7 @@ $userName = htmlspecialchars(trim($user['FirstName'] . ' ' . $user['LastName']))
                                             </svg>
                                         </div>
                                         <p class="upload-text mb-0">Drag your file here</p>
-                                    </div>
-
-                                    <p class="text-center text-muted my-3">or</p>
-
-                                    <div class="text-center">
-                                        <button class="btn browser-btn">Browser</button>
+                                        <p class="upload-subtext">or click to browse</p>
                                     </div>
                                 </div>
                             </div>
@@ -496,6 +491,40 @@ $userName = htmlspecialchars(trim($user['FirstName'] . ' ' . $user['LastName']))
                         </div>
                     </div>
 
+                    <!-- Hidden Templates for File Upload -->
+                    <!-- Template: Default Upload State -->
+                    <div id="uploadDefaultTemplate" style="display: none;">
+                        <div class="upload-icon">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <p class="upload-text mb-0">Drag your file here</p>
+                        <p class="upload-subtext">or click to browse</p>
+                    </div>
+
+                    <!-- Template: Image Preview State -->
+                    <div id="uploadPreviewTemplate" style="display: none;">
+                        <div class="upload-preview">
+                            <div class="preview-image-container">
+                                <img src="" alt="Preview" class="preview-image">
+                            </div>
+                            <div class="preview-info">
+                                <p class="preview-filename"><strong>File:</strong> <span class="filename-text"></span></p>
+                                <p class="preview-filesize"><strong>Size:</strong> <span class="filesize-text"></span></p>
+                            </div>
+                            <button type="button" class="btn btn-danger btn-sm remove-file-btn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+
                     <div class="footer-buttons">
                         <button class="btn " type="button" id="prev">Prev</button>
                         <button class="btn" type="button" id="next">Next</button>
@@ -514,6 +543,7 @@ $userName = htmlspecialchars(trim($user['FirstName'] . ' ' . $user['LastName']))
     <script src="javascript/reservation.js"></script>
     <script src="javascript/sidebar.js"></script>
     <script src="javascript/progress-btn.js"></script>
+    <script src="javascript/drag-file.js"></script>
 
 </body>
 

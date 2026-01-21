@@ -227,6 +227,13 @@ $(document).ready(function () {
             }
         }
         
+        // If on payment page, validate and save
+        if (currentPage === 'payment') {
+            e.preventDefault();
+            saveFinalReservation();
+            return false;
+        }
+        
         // For other pages (like select-facility), just check if Next button is enabled
         // If it's enabled, allow navigation
         if ($(this).prop('disabled')) {
@@ -577,7 +584,7 @@ function getCurrentPage() {
         return 'select-facility';
     }
     // Check for payment elements
-    if ($('#payment_method').length > 0 || $('.payment-section').length > 0) {
+    if ($('#uploadArea').length > 0 && $('#uploadArea').is(':visible')) {
         return 'payment';
     }
     
@@ -608,12 +615,23 @@ function canProceedFromCurrentPage() {
         // Check that ALL required fields in reservationData are filled (not just facility)
         return isReservationComplete();
     } else if (currentPage === 'payment') {
-        // On payment page, need complete reservation
-        return isReservationComplete();
+        // On payment page, need complete reservation AND payment proof uploaded
+        return isReservationComplete() && isPaymentProofUploaded();
     }
     
     // Default: allow if reservation is complete
     return isReservationComplete();
+}
+
+/**
+ * Check if payment proof is uploaded
+ */
+function isPaymentProofUploaded() {
+    if (typeof window.getUploadedPaymentProof === 'function') {
+        var proof = window.getUploadedPaymentProof();
+        return proof && proof.file !== null;
+    }
+    return false;
 }
 
 /**
@@ -1077,8 +1095,23 @@ function saveFinalReservation() {
         return false;
     }
 
-    // TODO: Add payment proof validation here when you implement file upload
-    // For now, we'll proceed without it
+    // Validate payment proof - MUST have uploaded file
+    if (typeof window.validatePaymentProof !== 'function' || !window.validatePaymentProof()) {
+        return false;
+    }
+
+    // Get the uploaded payment proof file
+    var paymentProof = window.getUploadedPaymentProof();
+    
+    if (!paymentProof || !paymentProof.file) {
+        Swal.fire({
+            icon: "warning",
+            title: "Payment Proof Required",
+            text: "Please upload your payment proof screenshot before proceeding.",
+            confirmButtonText: "OK"
+        });
+        return false;
+    }
 
     // Show loading state
     var $btn = $('#next');
@@ -1091,20 +1124,25 @@ function saveFinalReservation() {
     var timeStart = moment(reservationData.timeStart, 'h:mm A').format('HH:mm');
     var timeEnd = moment(reservationData.timeEnd, 'h:mm A').format('HH:mm');
 
-    // Send AJAX request to save
+    // Create FormData for file upload
+    var formData = new FormData();
+    formData.append('facility_name', reservationData.facility);
+    formData.append('phone', reservationData.phone);
+    formData.append('event_start_date', startDate);
+    formData.append('event_end_date', startDate); // Same day
+    formData.append('time_start', timeStart);
+    formData.append('time_end', timeEnd);
+    formData.append('note', reservationData.note || '');
+    formData.append('payment_proof', paymentProof.file); // Add the uploaded file
+
+    // Send AJAX request to save with file
     $.ajax({
         url: "save_event.php",
         type: "POST",
+        data: formData,
+        processData: false,  // Important for file upload
+        contentType: false,  // Important for file upload
         dataType: "json",
-        data: {
-            facility_name: reservationData.facility,
-            phone: reservationData.phone,
-            event_start_date: startDate,
-            event_end_date: startDate, // Same day
-            time_start: timeStart,
-            time_end: timeEnd,
-            note: reservationData.note || ''
-        },
         success: function (response) {
             // Reset button
             $btn.prop('disabled', false);
@@ -1168,7 +1206,6 @@ function saveFinalReservation() {
             });
         }
     });
-    
 
     return false;
 }
