@@ -187,9 +187,13 @@ $pending_requests_result = $conn->query($pending_requests_sql);
             </div>
 
             <!-- CHART SECTION -->
-            <div class="card p-3 shadow-sm mb-4">
-                <h5 class="mb-3">Reservation Status Overview</h5>
-                <canvas id="myChart" style="max-height: 400px;"></canvas>
+            <div class="card shadow-sm mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Reservation Status Overview</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="myChart" style="max-height: 400px;"></canvas>   
+</div>
             </div>
 
             <!-- RECENT ACTIVITY CARD -->
