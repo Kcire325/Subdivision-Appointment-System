@@ -169,7 +169,7 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </ul>
             </div>
             <div class="logout-section">
-                <a href="../adminside/log-out.php" method="post" class="logout-link">
+                <a href="../adminside/log-out.php" method="post" class="logout-link menu-link">
                     <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
                     <span class="menu-label">Log Out</span>
                 </a>
@@ -250,7 +250,7 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             </button>
                                             <?php else: ?>
                                             <!-- Approved/Rejected status - Show PDF and Delete buttons -->
-                                            <a href="generate_single_invoice.php?id=<?php echo $reservation['id']; ?>"
+                                            <a href="invoice.php?id=<?php echo $reservation['id']; ?>"
                                                 class="btn btn-sm btn-primary" download
                                                 title="Download PDF Invoice">
                                                 <i class="bi bi-file-pdf"></i> PDF

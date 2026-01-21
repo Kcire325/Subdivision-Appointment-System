@@ -18,6 +18,28 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Fetch current user data for sidebar
+$user_id = $_SESSION['user_id'];
+$userStmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$userStmt->bind_param("i", $user_id);
+$userStmt->execute();
+$userResult = $userStmt->get_result();
+$user = $userResult->fetch_assoc();
+$userStmt->close();
+
+// Profile picture fallback
+$profilePic = !empty($user['ProfilePictureURL'])
+    ? '../' . $user['ProfilePictureURL']
+    : '../asset/default-profile.png';
+
+// Verify the file exists, otherwise use default
+if (!empty($user['ProfilePictureURL']) && !file_exists('../' . $user['ProfilePictureURL'])) {
+    $profilePic = '../asset/default-profile.png';
+}
+
+// User's full name for sidebar
+$userName = htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']);
+
 $message = "";
 
 // Handle hide reservation (update admin_visible to FALSE)
@@ -79,9 +101,9 @@ while($f = $facility_list->fetch_assoc()) { $facilities_array[] = $f['facility_n
         <aside class="sidebar">
             <header class="sidebar-header">
                 <div class="profile-section">
-                    <img src="../asset/profile.jpg" alt="Profile" class="profile-photo">
+                    <img src="<?= htmlspecialchars($profilePic) ?>" alt="Profile" class="profile-photo">
                     <div class="profile-info">
-                        <p class="profile-name">Name</p>
+                        <p class="profile-name"><?= $userName ?></p>
                         <p class="profile-role">Admin</p>
                     </div>
                 </div>
@@ -125,7 +147,7 @@ while($f = $facility_list->fetch_assoc()) { $facilities_array[] = $f['facility_n
                 </ul>
             </div>
             <div class="logout-section">
-                <a href="log-out.php" method="post" class="logout-link">
+                <a href="log-out.php" method="post" class="logout-link menu-link">
                     <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
                     <span class="menu-label">Log Out</span>
                 </a>

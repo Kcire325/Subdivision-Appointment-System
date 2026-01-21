@@ -23,6 +23,29 @@ if (!isset($_SESSION['role']) || $_SESSION['role'] != 'Admin') {
     exit();
 }
 
+// Fetch logged-in user's information
+$loggedInUserName = "Admin";
+$loggedInUserProfilePic = "../asset/profile.jpg"; // Default profile picture
+
+if (isset($_SESSION['user_id'])) {
+    $userId = $_SESSION['user_id'];
+    $stmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+    $stmt->bind_param("i", $userId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $userData = $result->fetch_assoc();
+        $loggedInUserName = $userData['FirstName'] . ' ' . $userData['LastName'];
+        
+        // Use uploaded profile picture if available, otherwise use default
+        if (!empty($userData['ProfilePictureURL'])) {
+            $loggedInUserProfilePic = '../' . $userData['ProfilePictureURL'];
+        }
+    }
+    $stmt->close();
+}
+
 // Generate CSRF token if not exists
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -248,6 +271,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="create-account.css">
     <link rel="stylesheet" href="../resident-side/style/side-navigation1.css">
     <title>Create Account</title>
+
 </head>
 
 <body>
@@ -258,9 +282,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <aside class="sidebar">
         <header class="sidebar-header">
     <div class="profile-section">
-        <img src="../asset/profile.jpg" alt="Profile" class="profile-photo">
+        <img src="<?= htmlspecialchars($loggedInUserProfilePic) ?>" 
+             alt="Profile" 
+             class="profile-photo"
+             onerror="this.src='../asset/profile.jpg'">
         <div class="profile-info">
-            <p class="profile-name">Name</p>
+            <p class="profile-name"><?= htmlspecialchars($loggedInUserName) ?></p>
             <p class="profile-role">Admin</p>
         </div>
     </div>
@@ -304,7 +331,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </ul>
         </div>
         <div class="logout-section">
-            <a  href="../adminside/log-out.php" method="post" class="logout-link">
+            <a  href="../adminside/log-out.php" method="post" class="logout-link menu-link">
                 <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
                 <span class="menu-label">Log Out</span>
             </a>

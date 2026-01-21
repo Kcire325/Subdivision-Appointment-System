@@ -139,7 +139,7 @@ $userName = htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']);
                 </ul>
             </div>
             <div class="logout-section">
-                <a href="../adminside/log-out.php" method="post" class="logout-link">
+                <a href="../adminside/log-out.php" method="post" class="logout-link menu-link">
                     <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
                     <span class="menu-label">Log Out</span>
                 </a>
