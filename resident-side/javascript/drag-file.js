@@ -116,8 +116,7 @@ $(document).ready(function() {
 
     // Remove file handler
     $(document).on('click', '.remove-file-btn', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+       
         
         Swal.fire({
             icon: 'question',
