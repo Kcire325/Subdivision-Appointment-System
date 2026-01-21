@@ -80,8 +80,6 @@ $query = "SELECT id, facility_name, event_start_date, time_start, time_end, stat
 $stmt = $conn->prepare($query);
 $stmt->execute([':user_id' => $user_id]);
 $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
-// User's full name for sidebar
-$userName = htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -95,6 +93,9 @@ $userName = htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']);
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <!-- Google Material Symbols -->
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
@@ -106,6 +107,19 @@ $userName = htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']);
         rel="stylesheet">
 
     <title>My Reservations - Facility Reservation System</title>
+
+    <style>
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .btn-group-actions {
+            display: flex;
+            gap: 5px;
+        }
+    </style>
 </head>
 
 <body>
@@ -185,7 +199,7 @@ $userName = htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']);
                                     <th scope="col">Time Slot</th>
                                     <th scope="col">Status</th>
                                     <th scope="col">Booked On</th>
-                                    <th scope="col">Action</th>
+                                    <th scope="col">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -223,12 +237,30 @@ $userName = htmlspecialchars($user['FirstName'] . ' ' . $user['LastName']);
                                         <?php echo date('M d, Y g:i A', strtotime($reservation['created_at'])); ?>
                                     </td>
                                     <td>
-                                        <?php if ($reservation['status'] === 'pending'): ?>
-                                        <button class="btn btn-sm btn-outline-secondary" disabled
-                                            title="Cannot delete pending reservations">Delete</button>
-                                        <?php else: ?>
-                                        <button class="btn btn-sm btn-outline-danger delete-btn">Delete</button>
-                                        <?php endif; ?>
+                                        <div class="btn-group-actions">
+                                            <?php if ($reservation['status'] === 'pending'): ?>
+                                            <!-- Pending status - No PDF button, disabled delete -->
+                                            <button class="btn btn-sm btn-outline-secondary" disabled
+                                                title="Cannot generate PDF for pending reservations">
+                                                <i class="bi bi-file-pdf"></i> PDF
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" disabled
+                                                title="Cannot delete pending reservations">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                            <?php else: ?>
+                                            <!-- Approved/Rejected status - Show PDF and Delete buttons -->
+                                            <a href="generate_single_invoice.php?id=<?php echo $reservation['id']; ?>"
+                                                class="btn btn-sm btn-primary" download
+                                                title="Download PDF Invoice">
+                                                <i class="bi bi-file-pdf"></i> PDF
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-danger delete-btn"
+                                                title="Remove from view">
+                                                <i class="bi bi-trash"></i> Delete
+                                            </button>
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                 </tr>
                                 <?php endforeach; ?>
