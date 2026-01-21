@@ -52,10 +52,10 @@ $pdf->setPrintFooter(false);
 // Add a page
 $pdf->AddPage();
 
-// Set font
+
 $pdf->SetFont('helvetica', '', 11);
 
-// Create simple HTML content for PDF - no colors, just data
+
 $html = '
 <h2>Reservation Invoice</h2>
 <br>
@@ -91,7 +91,7 @@ $html = '
 ';
 
 // Output the HTML content
-$pdf->writeHTML($html, true, false, true, false, '');
+$pdf->writeHTML($html);
 
 // Close and output PDF document - 'D' forces download
 $pdf->Output('reservation_invoice_' . $reservation_id . '.pdf', 'D');
