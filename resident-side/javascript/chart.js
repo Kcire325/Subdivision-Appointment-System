@@ -15,9 +15,9 @@ if (ctx) {
                     chartData.pending
                 ],
                 backgroundColor: [
-                    'rgba(40, 167, 69, 0.8)',  // Green for approved
-                    'rgba(220, 53, 69, 0.8)',   // Red for rejected
-                    'rgba(255, 193, 7, 0.8)'    // Yellow for pending
+                    'rgba(40, 167, 69, 0.8)',  
+                    'rgba(220, 53, 69, 0.8)',   
+                    'rgba(255, 193, 7, 0.8)'    
                 ],
                 borderColor: [
                     'rgba(40, 167, 69, 1)',
