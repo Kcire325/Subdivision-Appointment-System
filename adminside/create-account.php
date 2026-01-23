@@ -317,7 +317,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </a>
                     </li>
                     <li class="menu-item">
-                        <a href="quick-reservation.php" class="menu-link">
+                        <a href="quick-reservation/quick-reservation.php" class="menu-link">
                             <img src="../asset/profile.png" class="menu-icon">
                             <span class="menu-label">Manage Accounts</span>
                         </a>

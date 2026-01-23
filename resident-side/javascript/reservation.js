@@ -347,19 +347,23 @@ function openBookingModal(start, end) {
 
 /**
  * Load events from database and initialize calendar
+ * FIXED: Filter out rejected reservations so those time slots become available again
  */
 function load_events() {
     $.ajax({
         url: "display_event.php",
         dataType: "json",
         success: function (response) {
-            // Store all events globally
-            allEvents = response.data || [];
+            // Store all events globally, but EXCLUDE rejected ones
+            // This allows rejected time slots to be available for booking again
+            allEvents = (response.data || []).filter(function(event) {
+                return event.status !== 'rejected';
+            });
 
             // Destroy existing calendar instance
             $('#calendar').fullCalendar('destroy');
 
-            // Filter events based on selected facility
+            // Filter events based on selected facility (still excluding rejected)
             var filteredEvents = [];
             if (allEvents.length > 0) {
                 if (selectedFacility) {
@@ -714,6 +718,7 @@ function checkModalFormCompletion() {
 
 /**
  * Check and disable already booked time slots AND past time slots
+ * FIXED: Only considers non-rejected bookings when checking for conflicts
  */
 function checkAndDisableBookedSlots(selectedDate, facilityName) {
     // Get current date and time
@@ -721,11 +726,14 @@ function checkAndDisableBookedSlots(selectedDate, facilityName) {
     var currentDate = now.format("YYYY-MM-DD");
     var isToday = selectedDate === currentDate;
 
-    // Get list of booked events first
+    // Get list of booked events, EXCLUDING rejected ones
+    // This ensures rejected bookings don't block time slots
     var bookedSlots = allEvents.filter(function(event) {
         var eventDate = moment(event.start).format("YYYY-MM-DD");
         var isMatch = event.title === facilityName && eventDate === selectedDate;
-        return isMatch;
+        // Only include if status is NOT rejected (or status doesn't exist)
+        var isNotRejected = !event.status || event.status !== 'rejected';
+        return isMatch && isNotRejected;
     });
 
     // Also check if temp event matches
@@ -756,7 +764,7 @@ function checkAndDisableBookedSlots(selectedDate, facilityName) {
             isPastTime = slotEndTime.isBefore(now) || slotEndTime.isSameOrBefore(now);
         }
         
-        // Check if this slot conflicts with any booked event
+        // Check if this slot conflicts with any booked event (excluding rejected)
         var isBooked = bookedSlots.some(function(event) {
             var eventStart = moment(event.start);
             var eventEnd = moment(event.end);
