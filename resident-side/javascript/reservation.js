@@ -402,28 +402,30 @@ function load_events() {
 
                 // FIXED: eventClick now properly accesses user_role
                 eventClick: function (event) {
-                    var statusText = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 
-                                    (event.isPending ? "Pending (Not yet submitted)" : "N/A");
-                    
-                    // FIXED: Access user_role from event object
-                    var userRole = event.user_role || "Unknown";
-                    
-                    console.log("Event clicked:", event); // Debug
-                    console.log("User role:", userRole); // Debug
-                    
-                    Swal.fire({
-                        title: "Event Details",
-                        icon: "info",
-                        confirmButtonText: "OK",
-                        html: `
-                            <strong>Facility:</strong> ${event.title}<br>
-                            <strong>Date:</strong> ${moment(event.start).format("MMMM DD, YYYY")}<br>
-                            <strong>Time:</strong> ${moment(event.start).format("h:mm A")} - ${moment(event.end).format("h:mm A")}<br>
-                            <strong>Status:</strong> ${statusText}<br>
-                            <strong>User Type:</strong> ${userRole}
-                        `
-                    });
-                },
+    var statusText = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 
+                    (event.isPending ? "Pending (Not yet submitted)" : "N/A");
+    
+    // FIXED: Access user_role from event object
+    var userRole = event.user_role || "Unknown";
+    
+    console.log("Event clicked:", event); // Debug
+    console.log("User role:", userRole); // Debug
+    
+    Swal.fire({
+        title: "Event Details",
+        icon: "info",
+        confirmButtonText: "OK",
+        html: `
+            <div style="text-align: left; padding: 10px;">
+                <p style="margin: 10px 0;"><strong>Facility:</strong> ${event.title}</p>
+                <p style="margin: 10px 0;"><strong>Date:</strong> ${moment(event.start).format("MMMM DD, YYYY")}</p>
+                <p style="margin: 10px 0;"><strong>Time:</strong> ${moment(event.start).format("h:mm A")} - ${moment(event.end).format("h:mm A")}</p>
+                <p style="margin: 10px 0;"><strong>Status:</strong> ${statusText}</p>
+                <p style="margin: 10px 0;"><strong>User Type:</strong> ${userRole}</p>
+            </div>
+        `
+    });
+},
 
                 selectConstraint: {
                     start: moment().format('YYYY-MM-DD'),
