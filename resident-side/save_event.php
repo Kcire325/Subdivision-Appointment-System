@@ -3,6 +3,7 @@
  * save_event.php
  * Handles saving facility reservations to the database with payment proof upload
  * FIXED: Only checks conflicts with pending/approved reservations, not rejected ones
+ * UPDATED: Now calculates and saves cost based on facility and time duration
  */
 
 session_start();
@@ -43,6 +44,7 @@ $event_end_date = isset($_POST['event_end_date']) ? $_POST['event_end_date'] : '
 $time_start = isset($_POST['time_start']) ? $_POST['time_start'] : '';
 $time_end = isset($_POST['time_end']) ? $_POST['time_end'] : '';
 $note = isset($_POST['note']) ? trim($_POST['note']) : '';
+$cost = isset($_POST['cost']) ? floatval($_POST['cost']) : 0;
 
 // Get user ID from session
 $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
@@ -116,6 +118,47 @@ if (!in_array($facility_name, $allowed_facilities)) {
     echo json_encode([
         'status' => false,
         'msg' => 'Invalid facility selected.'
+    ]);
+    exit();
+}
+
+// Calculate cost based on facility and time duration
+// Define facility prices per hour
+$facilityPrices = [
+    'Chapel' => 500,
+    'Basketball Court' => 100,
+    'Multipurpose Hall' => 600,
+    'Tennis Court' => 400
+];
+
+// Get the hourly rate for the selected facility
+$costPerHour = isset($facilityPrices[$facility_name]) ? $facilityPrices[$facility_name] : 350;
+
+// Calculate duration in hours
+$startTime = new DateTime($time_start);
+$endTime = new DateTime($time_end);
+$interval = $startTime->diff($endTime);
+$hours = $interval->h + ($interval->i / 60); // Convert minutes to decimal hours
+
+// Calculate total cost
+$calculatedCost = $costPerHour * $hours;
+
+// Use the calculated cost (server-side calculation is more secure)
+// But validate against the submitted cost to detect tampering
+if ($cost > 0 && abs($cost - $calculatedCost) > 0.01) {
+    // Cost mismatch - use server-calculated cost
+    error_log("Cost mismatch detected. Submitted: $cost, Calculated: $calculatedCost");
+    $cost = $calculatedCost;
+} else if ($cost == 0) {
+    // No cost submitted, use calculated
+    $cost = $calculatedCost;
+}
+
+// Validate that cost is reasonable
+if ($cost < 0) {
+    echo json_encode([
+        'status' => false,
+        'msg' => 'Invalid cost calculation. Please try again.'
     ]);
     exit();
 }
@@ -219,13 +262,13 @@ try {
         exit();
     }
     
-    // Insert new reservation with payment proof and visibility defaults
+    // Insert new reservation with payment proof, cost, and visibility defaults
     $sql = "INSERT INTO reservations 
             (user_id, facility_name, phone, event_start_date, event_end_date, 
-             time_start, time_end, note, payment_proof, status, admin_visible, resident_visible, created_at) 
+             time_start, time_end, note, cost, payment_proof, status, admin_visible, resident_visible, created_at) 
             VALUES 
             (:user_id, :facility_name, :phone, :event_start_date, :event_end_date, 
-             :time_start, :time_end, :note, :payment_proof, 'pending', TRUE, TRUE, NOW())";
+             :time_start, :time_end, :note, :cost, :payment_proof, 'pending', TRUE, TRUE, NOW())";
     
     $stmt = $conn->prepare($sql);
     $result = $stmt->execute([
@@ -237,6 +280,7 @@ try {
         ':time_start' => $time_start,
         ':time_end' => $time_end,
         ':note' => $note,
+        ':cost' => $cost,
         ':payment_proof' => $payment_proof_path
     ]);
     
@@ -246,7 +290,8 @@ try {
         echo json_encode([
             'status' => true,
             'msg' => 'Reservation saved successfully! Your booking is pending approval.',
-            'reservation_id' => $reservation_id
+            'reservation_id' => $reservation_id,
+            'cost' => $cost
         ]);
     } else {
         // Delete uploaded file if database insert fails

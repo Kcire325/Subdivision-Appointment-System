@@ -67,105 +67,74 @@ $(document).ready(function () {
                     load_events();
                     checkNextButtonState();
                 }
-                // If cancelled, do nothing - keep current facility selected
             });
             return;
         }
 
-        // Normal facility selection (no complete reservation exists, or same facility clicked)
-        // Remove selected class from all
+        // Normal facility selection
         $('.col').removeClass('selected');
-
-        // Add selected class to clicked facility
         $(this).parent().addClass('selected');
-
-        // Store facility name globally
         selectedFacility = clickedFacility;
-
-        // Update reservation data
         reservationData.facility = selectedFacility;
-
-        // Update summary immediately
         updateSummaryDisplay();
-
-        // Reload calendar to show only this facility's events
         load_events();
-        
-        // Check if we can enable next button
         checkNextButtonState();
     });
 
-    // Time slot selection handler - MODIFIED to use temp data
+    // Time slot selection handler
     $(document).on('click', '.slot-btn', function (e) {
-        // Prevent action if button is disabled or booked
         if ($(this).prop('disabled') || $(this).hasClass('disabled') || $(this).hasClass('booked')) {
             e.preventDefault();
             e.stopPropagation();
             return false;
         }
 
-        // Remove selected class from all buttons
         $('.slot-btn').removeClass('selected');
-
-        // Add selected class to clicked button
         $(this).addClass('selected');
 
-        // Store selected time in hidden fields
         $('#selected_time_start').val($(this).data('start'));
         $('#selected_time_end').val($(this).data('end'));
 
-        // Store in TEMPORARY data (not reservationData yet)
         var timeStart = $(this).data('start');
         var timeEnd = $(this).data('end');
         tempModalData.timeStart = moment(timeStart, 'HH:mm').format('h:mm A');
         tempModalData.timeEnd = moment(timeEnd, 'HH:mm').format('h:mm A');
         
-        // Check if form is complete
         checkModalFormCompletion();
     });
 
-    // Phone number validation - MODIFIED for Philippine numbers
+    // Phone number validation for Philippine numbers
     $('#phone').on('input', function () {
         var value = $(this).val();
-
-        // Remove non-numeric characters
         var cleaned = value.replace(/\D/g, '');
         $(this).val(cleaned);
-
-        // Validate phone number
         validatePhoneNumber($(this), cleaned);
-
-        // Store in TEMPORARY data (not reservationData yet)
         tempModalData.phone = cleaned;
-        
-        // Check if form is complete
         checkModalFormCompletion();
     });
 
-    // Also validate on blur
     $('#phone').on('blur', function () {
-        var cleaned = $(this).val();
-        validatePhoneNumber($(this), cleaned);
+        validatePhoneNumber($(this), $(this).val());
     });
 
-    // Note field - MODIFIED to use temp data
+    // Note field
     $('#event_note').on('input', function () {
         tempModalData.note = $(this).val().trim();
     });
 
-    // Save reservation button click handler - MODIFIED
+    // Save reservation button
     $('#saveReservationBtn').on('click', function () {
         saveToPaymentSection();
     });
 
-    // NEW: Handle modal close button (X) - discard changes
+    // Handle modal close - discard changes
     $('.btn-close, [data-bs-dismiss="modal"]').on('click', function() {
         if ($(this).closest('#myModal').length > 0) {
             discardModalChanges();
         }
     });
 
-    // NEW: Handle clicking outside modal (backdrop) - discard changes
+    // Handle clicking outside modal
     $('#myModal').on('click', function(e) {
         if ($(e.target).hasClass('modal')) {
             discardModalChanges();
@@ -173,52 +142,47 @@ $(document).ready(function () {
         }
     });
 
-    // NEW: Handle ESC key - discard changes
+    // Handle ESC key
     $(document).on('keydown', function(e) {
         if (e.key === 'Escape' && $('#myModal').hasClass('show')) {
             discardModalChanges();
         }
     });
 
-    // Modal shown event - check time slots after modal is fully loaded
+    // Modal shown event
     $('#myModal').on('shown.bs.modal', function () {
         var selectedDate = $("#event_start_date").val();
         var facilityName = $("#selected_facility").val() || selectedFacility;
         
-        // Disable save button initially
         checkModalFormCompletion();
         
         if (selectedDate && facilityName) {
-            // Small delay to ensure time slot buttons are rendered
             setTimeout(function() {
                 checkAndDisableBookedSlots(selectedDate, facilityName);
             }, 100);
         }
     });
 
-    // Modal hidden event - ensure temp data is cleared
+    // Modal hidden event
     $('#myModal').on('hidden.bs.modal', function() {
         checkNextButtonState();
     });
 
-    // Check form completion whenever inputs change
+    // Check form completion on input changes
     $(document).on('change keyup', '#phone, #event_note', function() {
         checkModalFormCompletion();
     });
 
-    // Check form completion when time slot is selected
     $(document).on('click', '.slot-btn', function() {
-        // Delay to ensure the selection is processed
         setTimeout(function() {
             checkModalFormCompletion();
         }, 50);
     });
 
-    // NEXT button click handler - validate before proceeding
+    // NEXT button click handler
     $('#next, .btn-next').on('click', function(e) {
         var currentPage = getCurrentPage();
         
-        // Only validate when trying to proceed FROM the date-time page TO payment
         if (currentPage === 'date-time') {
             if (!isReservationComplete()) {
                 e.preventDefault();
@@ -227,30 +191,25 @@ $(document).ready(function () {
             }
         }
         
-        // If on payment page, validate and save
         if (currentPage === 'payment') {
             e.preventDefault();
             saveFinalReservation();
             return false;
         }
         
-        // For other pages (like select-facility), just check if Next button is enabled
-        // If it's enabled, allow navigation
         if ($(this).prop('disabled')) {
             e.preventDefault();
             return false;
         }
         
-        // Allow the default action (navigation) to proceed
         return true;
     });
 
-    // Initialize next button state on page load with delay
+    // Initialize next button state
     setTimeout(function() {
         checkNextButtonState();
     }, 500);
     
-    // NEW: Continuously monitor and update button state (especially important for calendar page)
     setInterval(function() {
         checkNextButtonState();
     }, 500);
@@ -262,47 +221,41 @@ $(document).ready(function () {
 function validatePhoneNumber($input, phone) {
     var $feedback = $('#phoneFeedback');
     
-    // Empty check
     if (phone === '') {
         $input.removeClass('is-valid is-invalid');
         $feedback.hide();
         return false;
     }
     
-    // Must be exactly 11 digits
     if (phone.length !== 11) {
         $input.addClass('is-invalid').removeClass('is-valid');
         $feedback.text('Phone number must be 11 digits').show();
         return false;
     }
     
-    // Must start with 09
     if (!phone.startsWith('09')) {
         $input.addClass('is-invalid').removeClass('is-valid');
         $feedback.text('Phone number must start with 09').show();
         return false;
     }
     
-    // Check for all same digits (e.g., 11111111111)
     if (/^(\d)\1{10}$/.test(phone)) {
         $input.addClass('is-invalid').removeClass('is-valid');
         $feedback.text('Please enter a valid phone number').show();
         return false;
     }
     
-    // Valid
     $input.removeClass('is-invalid').addClass('is-valid');
     $feedback.hide();
     return true;
 }
 
 /**
- * NEW: Discard modal changes when closing without saving
+ * Discard modal changes when closing without saving
  */
 function discardModalChanges() {
     console.log("Modal closed without saving - discarding changes");
     
-    // Clear temporary modal data
     tempModalData = {
         phone: '',
         note: '',
@@ -311,10 +264,7 @@ function discardModalChanges() {
         selectedDate: ''
     };
     
-    // Clear the form inputs
     clearModalForm();
-    
-    // Re-check button state to ensure Next button is disabled
     checkNextButtonState();
 }
 
@@ -333,12 +283,8 @@ function openBookingModal(start, end) {
     $("#selected_facility").val(selectedFacility);
     $("#display_selected_date").text(moment(start).format("MMMM DD, YYYY"));
 
-    // Store selected date in temp data (not in reservationData yet)
     tempModalData.selectedDate = moment(start).format("MMMM DD, YYYY");
     
-    // DO NOT update reservationData.date here - wait for submit
-
-    // Check and disable booked time slots AND past time slots for this date and facility
     checkAndDisableBookedSlots(startDate, selectedFacility);
 
     $("#myModal").modal("show");
@@ -347,7 +293,7 @@ function openBookingModal(start, end) {
 
 /**
  * Load events from database and initialize calendar
- * FIXED: Filter out rejected reservations so those time slots become available again
+ * FIXED: Filter out rejected reservations so time slots become available
  */
 function load_events() {
     $.ajax({
@@ -356,25 +302,23 @@ function load_events() {
         success: function (response) {
             console.log("Raw response from server:", response);
             
-            // Store all events globally, but EXCLUDE rejected ones
-            // This allows rejected time slots to be available for booking again
+            // CRITICAL: Filter out rejected and cancelled reservations
+            // Only pending, approved, and completed reservations should block time slots
             var rawEvents = response.data || [];
             console.log("Total events from database:", rawEvents.length);
             
             allEvents = rawEvents.filter(function(event) {
-                var isRejected = event.status === 'rejected';
-                if (isRejected) {
-                    console.log("Filtering out rejected event:", event);
+                var shouldExclude = event.status === 'rejected' || event.status === 'cancelled';
+                if (shouldExclude) {
+                    console.log("Filtering out " + event.status + " event:", event);
                 }
-                return !isRejected;
+                return !shouldExclude;
             });
             
-            console.log("Events after filtering rejected:", allEvents.length);
+            console.log("Events after filtering rejected/cancelled:", allEvents.length);
 
-            // Destroy existing calendar instance
             $('#calendar').fullCalendar('destroy');
 
-            // Filter events based on selected facility (still excluding rejected)
             var filteredEvents = [];
             if (allEvents.length > 0) {
                 if (selectedFacility) {
@@ -386,14 +330,12 @@ function load_events() {
                 }
             }
 
-            // Add temporary event if it exists and matches selected facility
             if (tempCalendarEvent) {
                 if (!selectedFacility || tempCalendarEvent.title === selectedFacility) {
                     filteredEvents.push(tempCalendarEvent);
                 }
             }
 
-            // Initialize FullCalendar
             $('#calendar').fullCalendar({
                 header: {
                     left: 'prev,next today',
@@ -419,7 +361,6 @@ function load_events() {
                         return;
                     }
 
-                    // Check if user already has a saved booking
                     if (tempCalendarEvent !== null) {
                         Swal.fire({
                             icon: "warning",
@@ -434,10 +375,8 @@ function load_events() {
                             confirmButtonColor: "#ff6b6b"
                         }).then((result) => {
                             if (result.isConfirmed) {
-                                // Clear the temporary event to allow new booking
                                 tempCalendarEvent = null;
                                 
-                                // Reset reservation data except facility
                                 var savedFacility = reservationData.facility;
                                 reservationData = {
                                     facility: savedFacility,
@@ -449,10 +388,7 @@ function load_events() {
                                     totalCost: 0
                                 };
                                 
-                                // Reload calendar without temp event
                                 load_events();
-                                
-                                // Now open modal for new booking
                                 openBookingModal(start, end);
                             } else {
                                 $('#calendar').fullCalendar('unselect');
@@ -463,29 +399,24 @@ function load_events() {
 
                     openBookingModal(start, end);
                 },
-                // eto yung babaguhin
-                eventClick: function (event) {
-    Swal.fire({
-        title: "Event Details",
-        icon: "info",
-        confirmButtonText: "OK",
-        html: `
-            <strong>Facility:</strong> ${event.title}<br>
-            <strong>Date:</strong> ${moment(event.start).format("MMMM DD, YYYY")}<br>
-            <strong>Time:</strong> ${moment(event.start).format("h:mm A")} - ${moment(event.end).format("h:mm A")}<br>
-            <strong>Status:</strong> ${
-                event.status
-                    ? event.status.charAt(0).toUpperCase() + event.status.slice(1)
-                    : event.isPending
-                        ? "Pending (Not yet submitted)"
-                        : "N/A"
-            }<br>
-            <strong>User Type:</strong> ${event.user_role || "Unknown"}
-        `
-    });
-}
 
-,
+                eventClick: function (event) {
+                    var statusText = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : 
+                                    (event.isPending ? "Pending (Not yet submitted)" : "N/A");
+                    
+                    Swal.fire({
+                        title: "Event Details",
+                        icon: "info",
+                        confirmButtonText: "OK",
+                        html: `
+                            <strong>Facility:</strong> ${event.title}<br>
+                            <strong>Date:</strong> ${moment(event.start).format("MMMM DD, YYYY")}<br>
+                            <strong>Time:</strong> ${moment(event.start).format("h:mm A")} - ${moment(event.end).format("h:mm A")}<br>
+                            <strong>Status:</strong> ${statusText}<br>
+                            <strong>User Type:</strong> ${event.user_role || "Unknown"}
+                        `
+                    });
+                },
 
                 selectConstraint: {
                     start: moment().format('YYYY-MM-DD'),
@@ -505,7 +436,6 @@ function load_events() {
                 confirmButtonText: "OK"
             });
 
-            // Initialize empty calendar on error but still include temp event
             var events = [];
             if (tempCalendarEvent) {
                 if (!selectedFacility || tempCalendarEvent.title === selectedFacility) {
@@ -524,61 +454,17 @@ function load_events() {
                 defaultView: 'month',
                 events: events,
                 height: 600,
-
                 select: function (start, end) {
                     if (!selectedFacility) {
                         Swal.fire({
                             icon: "warning",
                             title: "No Facility Selected",
-                            text: "Please select a facility first by clicking on one of the facility cards above.",
+                            text: "Please select a facility first.",
                             confirmButtonText: "OK"
                         });
                         $('#calendar').fullCalendar('unselect');
                         return;
                     }
-
-                    // Check if user already has a saved booking
-                    if (tempCalendarEvent !== null) {
-                        Swal.fire({
-                            icon: "warning",
-                            title: "Booking Already Exists",
-                            html: "You already have a booking for <strong>" + tempCalendarEvent.title + "</strong><br>" +
-                                  "Date: " + moment(tempCalendarEvent.start).format("MMMM DD, YYYY") + "<br>" +
-                                  "Time: " + moment(tempCalendarEvent.start).format("h:mm A") + " - " + moment(tempCalendarEvent.end).format("h:mm A") + "<br><br>" +
-                                  "Do you want to change your booking?",
-                            showCancelButton: true,
-                            confirmButtonText: "Yes, Change Booking",
-                            cancelButtonText: "No, Keep Current",
-                            confirmButtonColor: "#ff6b6b"
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                // Clear the temporary event to allow new booking
-                                tempCalendarEvent = null;
-                                
-                                // Reset reservation data except facility
-                                var savedFacility = reservationData.facility;
-                                reservationData = {
-                                    facility: savedFacility,
-                                    date: '',
-                                    timeStart: '',
-                                    timeEnd: '',
-                                    phone: '',
-                                    note: '',
-                                    totalCost: 0
-                                };
-                                
-                                // Reload calendar without temp event
-                                load_events();
-                                
-                                // Now open modal for new booking
-                                openBookingModal(start, end);
-                            } else {
-                                $('#calendar').fullCalendar('unselect');
-                            }
-                        });
-                        return;
-                    }
-
                     openBookingModal(start, end);
                 }
             });
@@ -590,24 +476,19 @@ function load_events() {
  * Get current page/step
  */
 function getCurrentPage() {
-    // Check if calendar exists (Date & Time page)
     if ($('#calendar').length > 0 && $('#calendar').is(':visible')) {
         return 'date-time';
     }
-    // Check for facility cards without calendar (Select Facility page)
     if ($('.card-link').length > 0 && $('#calendar').length === 0) {
         return 'select-facility';
     }
-    // If there are facility cards and no visible calendar, it's select facility
     if ($('.card-link').length > 0 && !$('#calendar').is(':visible')) {
         return 'select-facility';
     }
-    // Check for payment elements
     if ($('#uploadArea').length > 0 && $('#uploadArea').is(':visible')) {
         return 'payment';
     }
     
-    // Fallback: check URL or active step indicator
     var activeStep = $('.progress-step.active, .step-circle.active').parent().find('.step-label').text().toLowerCase();
     if (activeStep.includes('facility')) {
         return 'select-facility';
@@ -627,18 +508,13 @@ function canProceedFromCurrentPage() {
     var currentPage = getCurrentPage();
     
     if (currentPage === 'select-facility') {
-        // On facility page, just need a facility selected
         return reservationData.facility !== null && reservationData.facility !== '';
     } else if (currentPage === 'date-time') {
-        // On date & time page, need complete booking (must have submitted the modal)
-        // Check that ALL required fields in reservationData are filled (not just facility)
         return isReservationComplete();
     } else if (currentPage === 'payment') {
-        // On payment page, need complete reservation AND payment proof uploaded
         return isReservationComplete() && isPaymentProofUploaded();
     }
     
-    // Default: allow if reservation is complete
     return isReservationComplete();
 }
 
@@ -654,7 +530,7 @@ function isPaymentProofUploaded() {
 }
 
 /**
- * Check if reservation is complete (all required data filled)
+ * Check if reservation is complete
  */
 function isReservationComplete() {
     return reservationData.facility && 
@@ -668,12 +544,11 @@ function isReservationComplete() {
 }
 
 /**
- * Check and update NEXT button state based on reservation completion
+ * Check and update NEXT button state
  */
 function checkNextButtonState() {
     var $nextBtn = $('#next, .btn-next');
     
-    // Don't do anything if button doesn't exist
     if ($nextBtn.length === 0) {
         return;
     }
@@ -686,43 +561,25 @@ function checkNextButtonState() {
 }
 
 /**
- * Check if modal form is complete and enable/disable save button - MODIFIED
+ * Check if modal form is complete
  */
 function checkModalFormCompletion() {
     var facilityName = $("#selected_facility").val() || selectedFacility;
-    var phone = tempModalData.phone; // Use temp data instead
+    var phone = tempModalData.phone;
     var selectedDate = $("#event_start_date").val();
     var timeStart = $("#selected_time_start").val();
     var timeEnd = $("#selected_time_end").val();
     
     var isComplete = true;
-    var missingFields = [];
     
-    // Check facility
-    if (!facilityName) {
+    if (!facilityName || !selectedDate || !timeStart || !timeEnd) {
         isComplete = false;
-        missingFields.push("facility");
     }
     
-    // Check date
-    if (!selectedDate) {
-        isComplete = false;
-        missingFields.push("date");
-    }
-    
-    // Check phone - must be 11 digits, start with 09, and not all same digits
     if (!phone || phone.length !== 11 || !phone.startsWith('09') || /^(\d)\1{10}$/.test(phone)) {
         isComplete = false;
-        missingFields.push("phone");
     }
     
-    // Check time slot
-    if (!timeStart || !timeEnd) {
-        isComplete = false;
-        missingFields.push("time slot");
-    }
-    
-    // Enable or disable the save button
     var $saveBtn = $('#saveReservationBtn');
     if (isComplete) {
         $saveBtn.prop('disabled', false).removeClass('disabled');
@@ -732,25 +589,23 @@ function checkModalFormCompletion() {
 }
 
 /**
- * Check and disable already booked time slots AND past time slots
- * FIXED: Only considers non-rejected bookings when checking for conflicts
+ * Check and disable booked/past time slots
+ * CRITICAL: Only considers pending, approved, and completed reservations
+ * Rejected and cancelled reservations DO NOT block time slots
  */
 function checkAndDisableBookedSlots(selectedDate, facilityName) {
     console.log("Checking slots for date:", selectedDate, "facility:", facilityName);
     console.log("Total allEvents:", allEvents.length);
     
-    // Get current date and time
     var now = moment();
     var currentDate = now.format("YYYY-MM-DD");
     var isToday = selectedDate === currentDate;
 
-    // Get list of booked events, EXCLUDING rejected ones
-    // This ensures rejected bookings don't block time slots
-    // Filter allEvents to only include non-rejected bookings for this date and facility
+    // CRITICAL: Only include non-rejected, non-cancelled bookings
+    // This ensures rejected/cancelled reservations don't block time slots
     var bookedSlots = allEvents.filter(function(event) {
-        // Skip if event has rejected status
-        if (event.status === 'rejected') {
-            console.log("Skipping rejected event in checkAndDisableBookedSlots:", event);
+        if (event.status === 'rejected' || event.status === 'cancelled') {
+            console.log("Skipping " + event.status + " event:", event);
             return false;
         }
         
@@ -764,9 +619,8 @@ function checkAndDisableBookedSlots(selectedDate, facilityName) {
         return matches;
     });
     
-    console.log("Booked slots for this date/facility:", bookedSlots.length);
+    console.log("Booked slots for this date/facility (excluding rejected/cancelled):", bookedSlots.length);
 
-    // Also check if temp event matches
     if (tempCalendarEvent) {
         var tempEventDate = moment(tempCalendarEvent.start).format("YYYY-MM-DD");
         if (tempCalendarEvent.title === facilityName && tempEventDate === selectedDate) {
@@ -774,24 +628,10 @@ function checkAndDisableBookedSlots(selectedDate, facilityName) {
         }
     }
 
-    console.log("=== TIME SLOT CHECK DEBUG ===");
-    console.log("Selected Date:", selectedDate);
-    console.log("Facility:", facilityName);
-    console.log("Total booked slots:", bookedSlots.length);
-    bookedSlots.forEach(function(slot, index) {
-        console.log("Booked Slot " + (index + 1) + ":", {
-            title: slot.title,
-            start: slot.start,
-            end: slot.end,
-            status: slot.status
-        });
-    });
-
-    // Process each time slot button
     $('.slot-btn').each(function() {
         var $button = $(this);
-        var slotStart = $button.data('start'); // e.g., "08:00"
-        var slotEnd = $button.data('end');     // e.g., "09:00"
+        var slotStart = $button.data('start');
+        var slotEnd = $button.data('end');
         
         if (!slotStart || !slotEnd) {
             return;
@@ -800,29 +640,21 @@ function checkAndDisableBookedSlots(selectedDate, facilityName) {
         var slotStartTime = moment(selectedDate + ' ' + slotStart, 'YYYY-MM-DD HH:mm');
         var slotEndTime = moment(selectedDate + ' ' + slotEnd, 'YYYY-MM-DD HH:mm');
         
-        // Check if this slot is in the past (only for today's date)
         var isPastTime = false;
         if (isToday) {
-            // If the slot end time has already passed, disable it
             isPastTime = slotEndTime.isBefore(now) || slotEndTime.isSameOrBefore(now);
         }
         
-        // Check if this slot conflicts with any booked event (excluding rejected)
         var isBooked = bookedSlots.some(function(event) {
             var eventStart = moment(event.start);
             var eventEnd = moment(event.end);
-            
-            // Check for time overlap
-            var overlaps = (slotStartTime.isBefore(eventEnd) && slotEndTime.isAfter(eventStart));
-            
-            return overlaps;
+            return (slotStartTime.isBefore(eventEnd) && slotEndTime.isAfter(eventStart));
         });
         
         if (isBooked) {
-            // Disable the booked slot
             $button.prop('disabled', true)
                    .addClass('disabled booked')
-                   .removeClass('selected') // Remove selected if it was selected
+                   .removeClass('selected')
                    .css({
                        'opacity': '0.5',
                        'cursor': 'not-allowed',
@@ -831,15 +663,13 @@ function checkAndDisableBookedSlots(selectedDate, facilityName) {
                        'pointer-events': 'none'
                    });
             
-            // Add "Booked" badge if not already present
             if ($button.find('.badge-danger').length === 0) {
                 $button.append(' <span class="badge badge-danger ml-2">Booked</span>');
             }
         } else if (isPastTime) {
-            // Disable past time slots
             $button.prop('disabled', true)
                    .addClass('disabled past-time')
-                   .removeClass('selected') // Remove selected if it was selected
+                   .removeClass('selected')
                    .css({
                        'opacity': '0.4',
                        'cursor': 'not-allowed',
@@ -848,15 +678,11 @@ function checkAndDisableBookedSlots(selectedDate, facilityName) {
                        'pointer-events': 'none'
                    });
             
-            // Add "Past" badge if not already present
             if ($button.find('.badge-secondary').length === 0) {
                 $button.append(' <span class="badge badge-secondary ml-2">Past</span>');
             }
-            
-            // Remove any "Booked" badge
             $button.find('.badge-danger').remove();
         } else {
-            // Enable the available slot (remove any previous disabled state)
             $button.prop('disabled', false)
                    .removeClass('disabled booked past-time')
                    .css({
@@ -866,18 +692,15 @@ function checkAndDisableBookedSlots(selectedDate, facilityName) {
                        'color': '',
                        'pointer-events': ''
                    });
-            
-            // Remove both "Booked" and "Past" badges
             $button.find('.badge-danger, .badge-secondary').remove();
         }
     });
 }
 
 /**
- * Save reservation data to payment section - MODIFIED to save from temp data
+ * Save reservation data to payment section
  */
 function saveToPaymentSection() {
-    // Get form values from temp data
     var facilityName = $("#selected_facility").val() || selectedFacility;
     var phone = tempModalData.phone;
     var startDate = $("#event_start_date").val();
@@ -886,7 +709,6 @@ function saveToPaymentSection() {
     var timeEnd = $("#selected_time_end").val();
     var note = tempModalData.note;
 
-    // Validate required fields
     if (!facilityName) {
         Swal.fire({
             icon: "warning",
@@ -896,46 +718,11 @@ function saveToPaymentSection() {
         return;
     }
 
-    if (!phone) {
-        Swal.fire({
-            icon: "warning",
-            title: "Phone Required",
-            text: "Please enter your phone number."
-        }).then(() => {
-            $("#phone").focus();
-        });
-        return;
-    }
-
-    // Validate Philippine phone number format
-    if (phone.length !== 11) {
+    if (!phone || phone.length !== 11 || !phone.startsWith('09') || /^(\d)\1{10}$/.test(phone)) {
         Swal.fire({
             icon: "error",
             title: "Invalid Phone Number",
-            text: "Phone number must be exactly 11 digits."
-        }).then(() => {
-            $("#phone").focus();
-        });
-        return;
-    }
-
-    if (!phone.startsWith('09')) {
-        Swal.fire({
-            icon: "error",
-            title: "Invalid Phone Number",
-            text: "Phone number must start with 09."
-        }).then(() => {
-            $("#phone").focus();
-        });
-        return;
-    }
-
-    // Check for repeated digits
-    if (/^(\d)\1{10}$/.test(phone)) {
-        Swal.fire({
-            icon: "error",
-            title: "Invalid Phone Number",
-            text: "Please enter a valid Philippine mobile number."
+            text: "Please enter a valid 11-digit Philippine mobile number starting with 09."
         }).then(() => {
             $("#phone").focus();
         });
@@ -951,17 +738,15 @@ function saveToPaymentSection() {
         return;
     }
 
-    // NOW SAVE TO ACTUAL reservationData (only when Submit is clicked)
+    // Save to actual reservationData
     reservationData.date = moment(startDate).format("MMMM DD, YYYY");
     reservationData.timeStart = moment(timeStart, 'HH:mm').format('h:mm A');
     reservationData.timeEnd = moment(timeEnd, 'HH:mm').format('h:mm A');
     reservationData.phone = phone;
     reservationData.note = note;
 
-    // Calculate and save cost
     calculateAndUpdateCost();
 
-    // Create temporary calendar event
     var eventStartDateTime = moment(startDate + ' ' + timeStart, 'YYYY-MM-DD HH:mm');
     var eventEndDateTime = moment(startDate + ' ' + timeEnd, 'YYYY-MM-DD HH:mm');
 
@@ -969,21 +754,15 @@ function saveToPaymentSection() {
         title: facilityName,
         start: eventStartDateTime.format('YYYY-MM-DD HH:mm:ss'),
         end: eventEndDateTime.format('YYYY-MM-DD HH:mm:ss'),
-        color: '#ffc107', // Yellow color to indicate pending/temporary
+        color: '#ffc107',
         textColor: '#000',
-        isPending: true // Custom flag to identify temporary events
+        isPending: true
     };
 
-    // Final update to summary
     updateSummaryDisplay();
-
-    // Reload calendar to show the temporary event
     load_events();
-
-    // Enable next button since reservation is now complete
     checkNextButtonState();
 
-    // Clear temp modal data since it's now saved
     tempModalData = {
         phone: '',
         note: '',
@@ -992,7 +771,6 @@ function saveToPaymentSection() {
         selectedDate: ''
     };
 
-    // Show success message
     Swal.fire({
         icon: "success",
         title: "Reservation Saved!",
@@ -1000,29 +778,23 @@ function saveToPaymentSection() {
         confirmButtonText: "OK"
     });
 
-    // Close modal
     $("#myModal").modal("hide");
-
-    // Clear form but keep facility selected
     clearModalForm();
 }
 
 /**
- * Update summary display in real-time as user selects options
+ * Update summary display
  */
 function updateSummaryDisplay() {
-    // Update all summary cards (both in date/time section and payment section)
     $('.summary-card').each(function() {
         var $summaryCard = $(this);
         
-        // Update facility name
         if (reservationData.facility) {
             $summaryCard.find('.facility-name').text(reservationData.facility);
         } else {
             $summaryCard.find('.facility-name').text('No facility selected');
         }
         
-        // Update date and time
         var datetimeText = '';
         if (reservationData.date) {
             datetimeText = reservationData.date;
@@ -1034,7 +806,6 @@ function updateSummaryDisplay() {
         }
         $summaryCard.find('.reservation-datetime').text(datetimeText);
         
-        // Update cost breakdown
         var breakdownText = '';
         if (reservationData.facility && reservationData.date) {
             breakdownText = reservationData.facility + ' Reservation - ' + reservationData.date;
@@ -1046,7 +817,6 @@ function updateSummaryDisplay() {
         }
         $summaryCard.find('.breakdown-item').html(breakdownText);
         
-        // Update price
         var formattedPrice = '₱0.00';
         if (reservationData.totalCost > 0) {
             formattedPrice = '₱' + reservationData.totalCost.toFixed(2);
@@ -1057,7 +827,7 @@ function updateSummaryDisplay() {
 }
 
 /**
- * Calculate and update cost based on current reservation data
+ * Calculate and update cost
  */
 function calculateAndUpdateCost() {
     if (!reservationData.facility || !reservationData.timeStart || !reservationData.timeEnd) {
@@ -1065,8 +835,6 @@ function calculateAndUpdateCost() {
         return;
     }
 
-    // Calculate cost based on facility
-    var costPerHour = 350; // Default cost per hour
     var facilityPrices = {
         'Chapel': 500,
         'Basketball Court': 100,
@@ -1074,11 +842,7 @@ function calculateAndUpdateCost() {
         'Tennis Court': 400
     };
 
-    if (facilityPrices[reservationData.facility]) {
-        costPerHour = facilityPrices[reservationData.facility];
-    }
-
-    // Calculate total hours
+    var costPerHour = facilityPrices[reservationData.facility] || 350;
     var start = moment(reservationData.timeStart, 'h:mm A');
     var end = moment(reservationData.timeEnd, 'h:mm A');
     var hours = end.diff(start, 'hours', true);
@@ -1086,54 +850,17 @@ function calculateAndUpdateCost() {
 }
 
 /**
- * Update the payment summary section with reservation data
- */
-function updatePaymentSummary() {
-    // Update all summary cards (both in date/time section and payment section)
-    $('.summary-card').each(function() {
-        var $summaryCard = $(this);
-        
-        // Update facility name
-        $summaryCard.find('.facility-name').text(reservationData.facility);
-        
-        // Update date and time
-        var datetimeText = reservationData.date + ', ' + 
-                          reservationData.timeStart + ' - ' + 
-                          reservationData.timeEnd;
-        $summaryCard.find('.reservation-datetime').text(datetimeText);
-        
-        // Update cost breakdown
-        var breakdownText = reservationData.facility + ' Reservation - ' + 
-                           reservationData.date + ', ' + 
-                           reservationData.timeStart + ' - ' + 
-                           reservationData.timeEnd;
-        $summaryCard.find('.breakdown-item').html(breakdownText);
-        
-        // Update price
-        var formattedPrice = '₱' + reservationData.totalCost.toFixed(2);
-        $summaryCard.find('.breakdown-price').text(formattedPrice);
-        $summaryCard.find('.total-price').text(formattedPrice);
-    });
-}
-
-/**
- * Clear modal form fields (but keep facility selection) - MODIFIED
+ * Clear modal form fields
  */
 function clearModalForm() {
-    // Clear form inputs
     $('#phone').val('');
     $('#event_note').val('');
     $('#selected_time_start').val('');
     $('#selected_time_end').val('');
-
-    // Reset time slot buttons - only remove selected class, don't disable
     $('.slot-btn').removeClass('selected');
-
-    // Remove validation classes
     $('#phone').removeClass('is-invalid is-valid');
     $('#phoneFeedback').hide();
     
-    // Clear temporary modal data
     tempModalData = {
         phone: '',
         note: '',
@@ -1142,22 +869,20 @@ function clearModalForm() {
         selectedDate: ''
     };
     
-    // Disable save button since form is now incomplete
     $('#saveReservationBtn').prop('disabled', true).addClass('disabled');
 }
 
 /**
- * Function to get reservation data (for when you actually submit to database)
+ * Get reservation data
  */
 function getReservationData() {
     return reservationData;
 }
 
 /**
- * Save final reservation to database (called from payment page)
+ * Save final reservation to database with cost calculation
  */
 function saveFinalReservation() {
-    // Validate that reservation data exists
     if (!reservationData.facility || !reservationData.date || !reservationData.timeStart || !reservationData.timeEnd) {
         Swal.fire({
             icon: "warning",
@@ -1216,6 +941,7 @@ function saveFinalReservation() {
     formData.append('time_start', timeStart);
     formData.append('time_end', timeEnd);
     formData.append('note', reservationData.note || '');
+    formData.append('cost', reservationData.totalCost); // Send calculated cost
     formData.append('payment_proof', paymentProof.file); // Add the uploaded file
 
     // Send AJAX request to save with file
@@ -1235,7 +961,7 @@ function saveFinalReservation() {
                 Swal.fire({
                     icon: "success",
                     title: "Reservation Saved!",
-                    text: "Your reservation has been saved successfully.",
+                    text: "Your reservation has been saved successfully and is pending approval.",
                     confirmButtonText: "OK"
                 }).then(() => {
                     // Clear temporary calendar event
@@ -1252,14 +978,15 @@ function saveFinalReservation() {
                         totalCost: 0
                     };
 
-                    // Redirect after alert closes
+                    // Redirect to my reservations page
                     window.location.href = "../my-reservations/myreservations.php";
                 });
             } else {
                 Swal.fire({
                     icon: "error",
                     title: "Reservation Failed",
-                    text: response.msg || "Error saving reservation. Please try again."
+                    text: response.msg || "Error saving reservation. Please try again.",
+                    confirmButtonText: "OK"
                 });
             }
         },
@@ -1279,6 +1006,7 @@ function saveFinalReservation() {
                 }
             } catch (e) {
                 // Could not parse error response
+                console.error("Could not parse error response:", e);
             }
 
             Swal.fire({
