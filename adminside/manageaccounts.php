@@ -169,6 +169,11 @@ $statuses = array_unique(array_column($users, 'Status'));
 <img src="https://api.iconify.design/mdi/logout.svg" alt="Logout" class="menu-icon">
 <span class="menu-label">Log Out</span>
 </div>
+<<<<<<< Updated upstream
+=======
+
+            
+>>>>>>> Stashed changes
         </aside>
 
         <!-- MAIN CONTENT -->
