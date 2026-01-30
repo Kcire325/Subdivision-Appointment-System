@@ -1,8 +1,16 @@
 let selectedFacility = null;
 let selectedTimeSlot = null;
 let currentBookings = [];
+let currentUserRole = 'Resident'; // Default to Resident, will be set from PHP session
 
 $(document).ready(function () {
+    // Get user role from the page (should be set by PHP in a data attribute or hidden input)
+    // Example: <body data-user-role="<?php echo $_SESSION['Role']; ?>">
+    const userRoleFromPage = $('body').data('user-role') || $('#user_role').val();
+    if (userRoleFromPage) {
+        currentUserRole = userRoleFromPage;
+    }
+
     // Initialize calendar
     initializeCalendar();
 
@@ -206,7 +214,7 @@ function initializeCalendar() {
                 'pending': '#f59e0b',
                 'rejected': '#ef4444'
             };
-// --------------- gagayahin ------------
+
             Swal.fire({
                 title: event.title,
                 html: `
@@ -358,6 +366,7 @@ function checkAvailableSlots(date) {
 }
 
 // Submit reservation - Creates APPROVED reservation directly (admin bypass)
+// FIXED: Now includes user_role in the submission
 function submitReservation(facility, date, timeStart, timeEnd, phone, note) {
     const $btn = $('#saveReservationBtn');
     const $spinner = $btn.find('.spinner-border');
@@ -375,7 +384,8 @@ function submitReservation(facility, date, timeStart, timeEnd, phone, note) {
             time_start: timeStart,
             time_end: timeEnd,
             phone: phone,
-            note: note
+            note: note,
+            user_role: currentUserRole  // FIXED: Now sending user_role
         },
         dataType: 'json',
         success: function (response) {
