@@ -150,13 +150,20 @@ foreach ($logs as $log) {
             break;
     }
 
+    // If Admin occupied the slot (Event_Created), we should NOT show "Resident: Admin Name"
+    // The user requested it to "just disappear"
+    $residentDisplay = $residentName;
+    if ($log['ActionType'] === 'Event_Created') {
+        $residentDisplay = null;
+    }
+
     $formattedLogs[] = [
         'admin' => htmlspecialchars($adminName),
         'timestamp' => $timestamp,
         'action_message' => $actionMessage,
         'bg_class' => $bgClass,
         'icon' => $iconSymbol,
-        'resident' => htmlspecialchars($residentName),
+        'resident' => $residentDisplay ? htmlspecialchars($residentDisplay) : null,
         'facility' => htmlspecialchars($facilityName),
         'date' => htmlspecialchars($eventDate),
         'time' => htmlspecialchars($timeRange)

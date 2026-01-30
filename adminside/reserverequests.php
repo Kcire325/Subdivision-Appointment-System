@@ -142,6 +142,15 @@ $reservations = $conn->query($res_sql);
         table tbody td:first-child {
             display: none;
         }
+
+        /* Fix for payment proof image in modal */
+        .payment-proof-img {
+            width: 100%;
+            max-height: 350px;
+            object-fit: contain;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
     </style>
 </head>
 

@@ -154,9 +154,7 @@ function initializeCalendar() {
         height: 'auto',
         contentHeight: 'auto',
         aspectRatio: aspectRatio,
-        validRange: {
-            start: moment().format('YYYY-MM-DD')
-        },
+        // validRange removed to show past dates
         
         // Handle window resize for responsive behavior
         windowResize: function(view) {
@@ -347,6 +345,10 @@ function checkAvailableSlots(date) {
     console.log("Checking slots for date:", date);
     console.log("Booked slots found:", bookedSlots.length);
 
+    // Check for past time slots if date is today
+    const now = moment();
+    const isToday = moment(date).isSame(now, 'day');
+
     $('.slot-btn').each(function () {
         const slotStart = $(this).data('start');
         const slotEnd = $(this).data('end');
@@ -358,9 +360,29 @@ function checkAvailableSlots(date) {
                 (slotStart <= booked.start && slotEnd >= booked.end);
         });
 
+        // Check if slot has passed (only for today)
+        let isPast = false;
+        if (isToday) {
+            // changing the format to match the slot format for comparison
+            const slotEndTime = moment(date + ' ' + slotEnd, 'YYYY-MM-DD HH:mm');
+            if (slotEndTime.isBefore(now)) {
+                isPast = true;
+            }
+        }
+
         if (isBooked) {
             $(this).addClass('disabled').prop('disabled', true);
-            console.log("Disabling slot:", slotStart, "-", slotEnd);
+            console.log("Disabling slot (booked):", slotStart, "-", slotEnd);
+        } else if (isPast) {
+            $(this).addClass('disabled').prop('disabled', true);
+            $(this).css({ 'background-color': '#e9ecef', 'cursor': 'not-allowed', 'opacity': '0.6' }); // Visual feedback
+            console.log("Disabling slot (past):", slotStart, "-", slotEnd);
+        } else {
+             // Ensure re-enabled if previously disabled (e.g. switching dates)
+             if (!$(this).hasClass('booked')) { // Do not re-enable if it has class booked from somewhere else, although here we rebuild from scratch basically
+                 $(this).removeClass('disabled').prop('disabled', false);
+                 $(this).css({ 'background-color': '', 'cursor': '', 'opacity': '' });
+             }
         }
     });
 }

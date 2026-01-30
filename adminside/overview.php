@@ -354,9 +354,11 @@ $completed_week_result = $conn->query($completed_week_sql);
                                         <?= htmlspecialchars($timestamp); ?>
                                     </div>
                                     <div class="small">
-                                        <span><strong>Resident:</strong>
-                                            <?= htmlspecialchars($residentName); ?>
-                                        </span><br>
+                                        <?php if ($log['ActionType'] !== 'Event_Created'): ?>
+                                            <span><strong>Resident:</strong>
+                                                <?= htmlspecialchars($residentName); ?>
+                                            </span><br>
+                                        <?php endif; ?>
                                         <span><strong>Facility:</strong>
                                             <?= htmlspecialchars($facilityName); ?>
                                         </span><br>
@@ -530,7 +532,7 @@ $completed_week_result = $conn->query($completed_week_sql);
                             ${log.timestamp}
                         </div>
                         <div class="small text-secondary">
-                            <span><strong>Resident:</strong> ${log.resident}</span><br>
+                            ${log.resident ? `<span><strong>Resident:</strong> ${log.resident}</span><br>` : ''}
                             <span><strong>Facility:</strong> ${log.facility}</span><br>
                             <span><strong>Date:</strong> ${log.date}</span>
                             ${log.time ? `<br><span><strong>Time:</strong> ${log.time}</span>` : ''}
