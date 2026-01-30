@@ -193,12 +193,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $insertStmt->bindParam(':note', $note, PDO::PARAM_STR);
 
         $insertStmt->execute();
+        $newReservationId = $conn->lastInsertId();
+
+        // LOGGING: Admin occupied a slot
+        try {
+            // Build details array for JSON
+            $details = [
+                'facility_name' => $facility,
+                'event_start_date' => $date,
+                'event_end_date' => $date,
+                'time_start' => $timeStart,
+                'time_end' => $timeEnd,
+                'phone' => $phone,
+                'note' => $note
+            ];
+            $detailsJson = json_encode($details);
+
+            $logSql = "INSERT INTO auditlogs (AdminID, UserID, ActionType, EntityType, EntityID, EntityDetails, Remarks, Timestamp) 
+                       VALUES (:admin_id, :user_id, 'Event_Created', 'Reservation', :entity_id, :details, 'Admin occupied slot', NOW())";
+
+            $logStmt = $conn->prepare($logSql);
+            $logStmt->bindParam(':admin_id', $user_id, PDO::PARAM_INT);
+            $logStmt->bindParam(':user_id', $user_id, PDO::PARAM_INT); // Admin is also the user here
+            $logStmt->bindParam(':entity_id', $newReservationId, PDO::PARAM_INT);
+            $logStmt->bindParam(':details', $detailsJson, PDO::PARAM_STR);
+            $logStmt->execute();
+
+        } catch (Exception $logEx) {
+            // Silently fail logging to not disrupt reservation
+        }
 
         echo json_encode([
             'success' => true,
             'message' => 'Reservation created and approved successfully',
-            'reservation_id' => $conn->lastInsertId(),
-            'user_role' => $user_role  // Return for debugging
+            'reservation_id' => $newReservationId,
+            'user_role' => $user_role
         ]);
         exit();
 
@@ -556,7 +585,7 @@ $loggedInUserProfilePic = $profilePic;
                     </li>
                     <li class="menu-item">
                         <a href="../manageaccounts.php" class="menu-link">
-                            <img src="../../asset/manage2.png" alt="Manage Accounts Icon" class="menu-icon">  
+                            <img src="../../asset/manage2.png" alt="Manage Accounts Icon" class="menu-icon">
                             <span class="menu-label">Manage Accounts</span>
                         </a>
                     </li>
