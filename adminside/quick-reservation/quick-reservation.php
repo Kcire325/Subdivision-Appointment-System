@@ -552,10 +552,6 @@ $loggedInUserProfilePic = $profilePic;
                         </a>
                     </li>
                     <li class="menu-item">
-                        <a href="../manageaccounts.php" class="menu-link">
-                            <img src="../../asset/manage2.png" alt="Manage Accounts Icon" class="menu-icon">  
-                            <span class="menu-label">Manage Accounts</span>
-                        </a>
                     </li>
                 </ul>
             </div>

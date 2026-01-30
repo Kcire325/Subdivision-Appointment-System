@@ -97,7 +97,6 @@ body {
 .reservation-card .card-body {
     padding: 10px;
     overflow-x: auto;
-    min-height: 600px;
     /* Force minimum height for 10 rows + UI */
     display: flex;
     flex-direction: column;
@@ -133,15 +132,17 @@ body {
     background-color: #f8f9fa;
 }
 
-/* ENHANCED: Table hover effect - no scale to prevent width shift */
+/* ENHANCED: Table hover effect (copied from my-reservations) */
 .table.table-hover tbody tr {
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    transition: all 0.3s ease;
     height: 60px;
 }
 
 .table.table-hover tbody tr:hover {
-    background: rgba(95, 212, 212, 0.15);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    transform: scale(1.01);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
 }
 
 /* ADDED: Badge styling */

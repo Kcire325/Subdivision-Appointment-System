@@ -98,6 +98,13 @@ $reservations = $conn->query($res_sql);
     <link rel="stylesheet" href="../resident-side/style/side-navigation1.css">
     <link rel="stylesheet"
         href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0">
+    <style>
+        /* Hide ID column on this page */
+        table thead th:first-child,
+        table tbody td:first-child {
+            display: none;
+        }
+    </style>
 </head>
 
 <body>
@@ -159,12 +166,6 @@ $reservations = $conn->query($res_sql);
                             <span class="menu-label">Create Account</span>
                         </a>
                     </li>
-                    <li class="menu-item">
-                        <a href="manageaccounts.php" class="menu-link">
-                            <img src="../asset/manage2.png" alt="Manage Accounts Icon" class="menu-icon">  
-                            <span class="menu-label">Manage Accounts</span>
-                        </a>
-                    </li>
                 </ul>
             </div>
 
@@ -191,10 +192,10 @@ $reservations = $conn->query($res_sql);
                     <?php endif; ?>
 
                     <div class="table-responsive mt-3">
-                        <table class="table table-bordered table-hover align-middle">
+                        <table class="table table-hover align-middle">
                             <thead class="table-dark">
                                 <tr>
-                                    <th>ID</th>
+                                    <th class="id-column">ID</th>
                                     <th>Facility</th>
                                     <th>Phone</th>
                                     <th>Event Date</th>
@@ -217,7 +218,7 @@ $reservations = $conn->query($res_sql);
                                         data-note="<?= htmlspecialchars($row['note'] ?: 'No notes provided') ?>"
                                         data-created="<?= date('M d, Y g:i A', strtotime($row['created_at'])) ?>"
                                         data-payment="<?= htmlspecialchars($row['payment_proof']) ?>">
-                                        <td>
+                                        <td class="id-column">
                                             <?= $row['id'] ?>
                                         </td>
                                         <td>

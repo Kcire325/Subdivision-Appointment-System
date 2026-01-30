@@ -228,7 +228,6 @@ while ($f = $facility_list->fetch_assoc()) {
                         <table class="table table-hover">
                             <thead class="table-dark">
                                 <tr>
-                                    <th class="id-column">ID</th>
                                     <th>Facility</th>
                                     <th>Phone</th>
                                     <th>Date</th>
