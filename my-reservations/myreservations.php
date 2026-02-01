@@ -303,7 +303,7 @@ $reservations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         data-reason="<?= htmlspecialchars($reservation['reason'] ?? 'No reason provided.') ?>"
                                         data-note="<?= htmlspecialchars($reservation['note'] ?? 'No notes provided') ?>"
                                         data-payment="<?= htmlspecialchars($reservation['payment_proof'] ?? '') ?>"
-                                        <?php if ($reservation['status'] !== 'rejected'): ?>
+                                        <?php if ($reservation['status'] === 'approved'): ?>
                                             data-invoice-url="invoice.php?id=<?= $reservation['id'] ?>"
                                         <?php endif; ?>
                                         >

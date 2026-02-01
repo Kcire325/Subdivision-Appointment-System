@@ -20,6 +20,7 @@ var tempModalData = {
     timeEnd: '',
     selectedDate: ''
 };
+var rangeStartSlot = null; // Track start of range selection
 
 $(document).ready(function () {
     // Initialize calendar when page loads
@@ -81,7 +82,7 @@ $(document).ready(function () {
         checkNextButtonState();
     });
 
-    // Time slot selection handler
+    // Time slot selection handler (Range Selection)
     $(document).on('click', '.slot-btn', function (e) {
         if ($(this).prop('disabled') || $(this).hasClass('disabled') || $(this).hasClass('booked')) {
             e.preventDefault();
@@ -89,19 +90,97 @@ $(document).ready(function () {
             return false;
         }
 
-        $('.slot-btn').removeClass('selected');
-        $(this).addClass('selected');
+        var $clickedSlot = $(this);
+        var clickedStart = $clickedSlot.data('start');
+        var clickedEnd = $clickedSlot.data('end');
 
-        $('#selected_time_start').val($(this).data('start'));
-        $('#selected_time_end').val($(this).data('end'));
+        // Logic: First click sets start. Second click sets end (if valid).
+        // If clicking earlier than start, or if start not set, it becomes new start.
 
-        var timeStart = $(this).data('start');
-        var timeEnd = $(this).data('end');
-        tempModalData.timeStart = moment(timeStart, 'HH:mm').format('h:mm A');
-        tempModalData.timeEnd = moment(timeEnd, 'HH:mm').format('h:mm A');
+        if (!rangeStartSlot) {
+            // Case 1: Start new range
+            rangeStartSlot = $clickedSlot;
+            $('.slot-btn').removeClass('selected');
+            $clickedSlot.addClass('selected');
+
+            // Update data for single slot
+            updateTimeSelection(clickedStart, clickedEnd);
+        } else {
+            var startDisplay = rangeStartSlot.data('start'); // e.g. "09:00"
+
+            // Compare times (string comparison works for ISO 24h format "HH:mm")
+            if (clickedStart < startDisplay) {
+                // Case 2: Clicked earlier -> New Start
+                rangeStartSlot = $clickedSlot;
+                $('.slot-btn').removeClass('selected');
+                $clickedSlot.addClass('selected');
+                updateTimeSelection(clickedStart, clickedEnd);
+            } else if (clickedStart === startDisplay) {
+                // Case 3: Clicked same slot -> Keep as single slot (or toggle off? Keeping as selection)
+                // Just keep it selected.
+                updateTimeSelection(clickedStart, clickedEnd);
+                // If user meant to just select one, clicking again resets range start so next click can be anything?
+                // Let's keep rangeStartSlot set so next click AFTER this one makes a range.
+            } else {
+                // Case 4: Clicked later -> Range End
+                var $allSlots = $('.slot-btn');
+                var startIdx = $allSlots.index(rangeStartSlot);
+                var endIdx = $allSlots.index($clickedSlot);
+
+                var isValidRange = true;
+                var $rangeSlots = $allSlots.slice(startIdx, endIdx + 1);
+
+                // Validate range availability
+                $rangeSlots.each(function () {
+                    if ($(this).hasClass('disabled') || $(this).hasClass('booked') || $(this).prop('disabled')) {
+                        isValidRange = false;
+                        return false;
+                    }
+                });
+
+                if (!isValidRange) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Invalid Selection',
+                        text: 'Selected range contains booked or unavailable slots.'
+                    });
+                    // Reset to just the clicked slot? Or keep start?
+                    // Let's reset to just this new clicked slot to be safe/clear
+                    rangeStartSlot = $clickedSlot;
+                    $('.slot-btn').removeClass('selected');
+                    $clickedSlot.addClass('selected');
+                    updateTimeSelection(clickedStart, clickedEnd);
+                } else {
+                    // Valid Range
+                    $('.slot-btn').removeClass('selected');
+                    $rangeSlots.addClass('selected');
+
+                    // Update selection with Range START and Range END
+                    // Start of first slot, End of last slot
+
+                    // We already have clickedStart (start of last slot) and clickedEnd (end of last slot)
+                    // We need Start of first slot.
+                    var finalStartTime = rangeStartSlot.data('start');
+                    var finalEndTime = clickedEnd; // End of the clicked slot
+
+                    updateTimeSelection(finalStartTime, finalEndTime);
+
+                    // Reset range start so next click starts a NEW selection
+                    rangeStartSlot = null;
+                }
+            }
+        }
+    });
+
+    function updateTimeSelection(start, end) {
+        $('#selected_time_start').val(start);
+        $('#selected_time_end').val(end);
+
+        tempModalData.timeStart = moment(start, 'HH:mm').format('h:mm A');
+        tempModalData.timeEnd = moment(end, 'HH:mm').format('h:mm A');
 
         checkModalFormCompletion();
-    });
+    }
 
     // Phone number validation for Philippine numbers
     $('#phone').on('input', function () {
@@ -263,6 +342,7 @@ function discardModalChanges() {
         timeEnd: '',
         selectedDate: ''
     };
+    rangeStartSlot = null; // Reset range selection logic
 
     clearModalForm();
     checkNextButtonState();
@@ -273,6 +353,7 @@ function discardModalChanges() {
  */
 function openBookingModal(start, end) {
     clearModalForm();
+    rangeStartSlot = null; // Reset range selection logic
 
     var startDate = moment(start).format("YYYY-MM-DD");
     var endDate = moment(end).format("YYYY-MM-DD");
