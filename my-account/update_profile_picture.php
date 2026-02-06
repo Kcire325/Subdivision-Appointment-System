@@ -58,7 +58,7 @@ if ($_FILES['profile_pic']['error'] !== UPLOAD_ERR_OK) {
         UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk.',
         UPLOAD_ERR_EXTENSION => 'File upload stopped by extension.'
     ];
-    
+
     $error = $errorMessages[$_FILES['profile_pic']['error']] ?? 'Unknown upload error.';
     $_SESSION['error_message'] = $error;
     header("Location: my-account.php");
@@ -127,7 +127,7 @@ if (!file_exists($htaccessPath)) {
 
 // Get old profile picture
 try {
-    $stmt = $conn->prepare("SELECT ProfilePictureURL FROM users WHERE user_id = ?");
+    $stmt = $conn->prepare("SELECT ProfilePictureURL FROM userinfo WHERE user_id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $oldPic = $stmt->fetchColumn();
 } catch (PDOException $e) {
@@ -154,37 +154,39 @@ chmod($fullPath, 0644);
 // Update database
 try {
     $stmt = $conn->prepare("
-        UPDATE users
+        UPDATE userinfo
         SET ProfilePictureURL = ?
         WHERE user_id = ?
     ");
     $stmt->execute([$dbPath, $_SESSION['user_id']]);
-    
+
     // Delete old profile picture if it exists and is not the default
-    if ($oldPic && 
-        !empty($oldPic) && 
-        strpos($oldPic, 'default-profile.png') === false) {
-        
+    if (
+        $oldPic &&
+        !empty($oldPic) &&
+        strpos($oldPic, 'default-profile.png') === false
+    ) {
+
         // Handle both absolute and relative paths
         if (strpos($oldPic, '/Subdivision-Appointment-System/') === 0) {
             $oldFilePath = $_SERVER['DOCUMENT_ROOT'] . $oldPic;
         } else {
             $oldFilePath = $_SERVER['DOCUMENT_ROOT'] . '/Subdivision-Appointment-System/' . $oldPic;
         }
-        
+
         if (file_exists($oldFilePath)) {
             unlink($oldFilePath);
         }
     }
-    
+
     $_SESSION['success_message'] = 'Profile picture updated successfully!';
-    
+
 } catch (PDOException $e) {
     // If database update fails, delete the uploaded file
     if (file_exists($fullPath)) {
         unlink($fullPath);
     }
-    
+
     $_SESSION['error_message'] = 'Failed to update profile picture in database.';
     header("Location: my-account.php");
     exit();

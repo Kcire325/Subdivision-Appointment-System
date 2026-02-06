@@ -26,13 +26,16 @@ $password = '';
 try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8mb4", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-} catch(PDOException $e) {
+} catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
 
 // fetch current user data for sidebar
 $user_id = $_SESSION['user_id'];
-$userStmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$userStmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                           FROM users u 
+                           JOIN userinfo ui ON u.user_id = ui.user_id 
+                           WHERE u.user_id = ?");
 $userStmt->execute([$user_id]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -318,19 +321,13 @@ $userName = htmlspecialchars(trim($user['FirstName'] . ' ' . $user['LastName']))
 
                                     <!-- Phone Number -->
                                     <div class="form-group mb-3">
-    <label for="phone">Phone Number: <span class="text-danger">*</span></label>
-    <input type="text" 
-        class="form-control" 
-        id="phone" 
-        name="phone"
-        placeholder="09123456789"
-        maxlength="11"
-        pattern="^09\d{9}$"
-        required>
-    <div class="invalid-feedback" id="phoneFeedback">
-        Please enter a valid Philippine mobile number (e.g., 09123456789)
-    </div>
-</div>
+                                        <label for="phone">Phone Number: <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="phone" name="phone"
+                                            placeholder="09123456789" maxlength="11" pattern="^09\d{9}$" required>
+                                        <div class="invalid-feedback" id="phoneFeedback">
+                                            Please enter a valid Philippine mobile number (e.g., 09123456789)
+                                        </div>
+                                    </div>
 
                                     <!-- Time Slots -->
                                     <div class="form-group mb-3">
@@ -497,7 +494,8 @@ $userName = htmlspecialchars(trim($user['FirstName'] . ' ' . $user['LastName']))
                     <!-- Template: Default Upload State -->
                     <div id="uploadDefaultTemplate" style="display: none;">
                         <div class="upload-icon">
-                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
                                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                                 <polyline points="17 8 12 3 7 8"></polyline>
                                 <line x1="12" y1="3" x2="12" y2="15"></line>
@@ -514,11 +512,14 @@ $userName = htmlspecialchars(trim($user['FirstName'] . ' ' . $user['LastName']))
                                 <img src="" alt="Preview" class="preview-image">
                             </div>
                             <div class="preview-info">
-                                <p class="preview-filename"><strong>File:</strong> <span class="filename-text"></span></p>
-                                <p class="preview-filesize"><strong>Size:</strong> <span class="filesize-text"></span></p>
+                                <p class="preview-filename"><strong>File:</strong> <span class="filename-text"></span>
+                                </p>
+                                <p class="preview-filesize"><strong>Size:</strong> <span class="filesize-text"></span>
+                                </p>
                             </div>
                             <button type="button" class="btn btn-danger btn-sm remove-file-btn">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <line x1="18" y1="6" x2="6" y2="18"></line>
                                     <line x1="6" y1="6" x2="18" y2="18"></line>
                                 </svg>

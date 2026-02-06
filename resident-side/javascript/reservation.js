@@ -515,6 +515,7 @@ function load_events() {
                 <p style="margin: 10px 0;"><strong>Time:</strong> ${moment(event.start).format("h:mm A")} - ${moment(event.end).format("h:mm A")}</p>
                 <p style="margin: 10px 0;"><strong>Status:</strong> ${statusText}</p>
                 <p style="margin: 10px 0;"><strong>User Type:</strong> ${userRole}</p>
+                ${event.note ? `<p style="margin: 10px 0;"><strong>Note:</strong> ${event.note}</p>` : ''}
             </div>
         `
                     });

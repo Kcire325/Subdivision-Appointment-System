@@ -26,8 +26,10 @@ $conn = new PDO(
 // Fetch user
 $user_id = $_SESSION['user_id'];
 $stmt = $conn->prepare("
-    SELECT FirstName, LastName, Email, Birthday, Block, Lot, StreetName, ProfilePictureURL
-    FROM users WHERE user_id = ?
+    SELECT ui.FirstName, ui.LastName, u.Email, ui.Birthday, ui.Block, ui.Lot, ui.StreetName, ui.ProfilePictureURL
+    FROM users u
+    JOIN userinfo ui ON u.user_id = ui.user_id
+    WHERE u.user_id = ?
 ");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);

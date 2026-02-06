@@ -29,9 +29,9 @@ try {
                     r.time_start,
                     r.time_end,
                     r.status,
-                    CONCAT(u.FirstName, ' ', u.LastName) as resident_name
+                    CONCAT(ui.FirstName, ' ', ui.LastName) as resident_name
                 FROM reservations r
-                INNER JOIN users u ON r.user_id = u.user_id
+                LEFT JOIN userinfo ui ON r.user_id = ui.user_id
                 WHERE r.facility_name = :facility
                 AND r.status IN ('confirmed', 'approved', 'pending')
                 AND r.overwriteable = 0
@@ -49,9 +49,9 @@ try {
                     r.time_start,
                     r.time_end,
                     r.status,
-                    CONCAT(u.FirstName, ' ', u.LastName) as resident_name
+                    CONCAT(ui.FirstName, ' ', ui.LastName) as resident_name
                 FROM reservations r
-                INNER JOIN users u ON r.user_id = u.user_id
+                LEFT JOIN userinfo ui ON r.user_id = ui.user_id
                 WHERE r.status IN ('confirmed', 'approved', 'pending')
                 AND r.overwriteable = 0
                 ORDER BY r.event_start_date ASC";

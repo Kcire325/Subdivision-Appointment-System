@@ -29,7 +29,10 @@ $loggedInUserProfilePic = "../asset/profile.jpg"; // Default profile picture
 
 if (isset($_SESSION['user_id'])) {
     $userId = $_SESSION['user_id'];
-    $stmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+    $stmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                           FROM users u 
+                           JOIN userinfo ui ON u.user_id = ui.user_id 
+                           WHERE u.user_id = ?");
     $stmt->bind_param("i", $userId);
     $stmt->execute();
     $result = $stmt->get_result();
@@ -256,23 +259,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $roleValue = ucfirst(strtolower($role));
 
     try {
-        // Insert user into database
-        $sql = "INSERT INTO users (FirstName, LastName, Birthday, Email, Password, Role, Block, Lot, StreetName, ProfilePictureURL, Status) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'Active')";
+        // Begin Transaction
+        $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare($sql);
-        $stmt->execute([
+        // 1. Insert into users table (Auth info)
+        $sqlUsers = "INSERT INTO users (Email, Password, Role, Status) VALUES (?, ?, ?, 'Active')";
+        $stmtUsers = $pdo->prepare($sqlUsers);
+        $stmtUsers->execute([$email, $hashedPassword, $roleValue]);
+
+        $newUserId = $pdo->lastInsertId();
+
+        // 2. Insert into userinfo table (Profile info)
+        $sqlUserInfo = "INSERT INTO userinfo (user_id, FirstName, LastName, Birthday, Block, Lot, StreetName, ProfilePictureURL) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmtUserInfo = $pdo->prepare($sqlUserInfo);
+        $stmtUserInfo->execute([
+            $newUserId,
             $firstName,
             $lastName,
             $birthday,
-            $email,
-            $hashedPassword,
-            $roleValue,
             $block,
             $lot,
             $streetName,
             $profilePictureURL
         ]);
+
+        // Commit Transaction
+        $pdo->commit();
 
         $_SESSION['success'] = "Account created successfully!";
         header("Location: create-account.php");

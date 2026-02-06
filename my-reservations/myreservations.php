@@ -28,7 +28,10 @@ try {
 
 // Fetch current user data for sidebar
 $user_id = $_SESSION['user_id'];
-$userStmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$userStmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                           FROM users u 
+                           JOIN userinfo ui ON u.user_id = ui.user_id 
+                           WHERE u.user_id = ?");
 $userStmt->execute([$user_id]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 

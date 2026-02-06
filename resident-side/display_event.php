@@ -119,6 +119,15 @@ try {
         // Get user_role, default to 'Resident' if NULL or empty
         $userRole = !empty($reservation['user_role']) ? $reservation['user_role'] : 'Resident';
 
+        // Create the Note content based on visibility rules
+        // Rule: Only show note if:
+        // 1. It was created by an Admin (Public note)
+        // 2. It belongs to the current logged-in user (Private note)
+        $noteContent = null;
+        if ($userRole === 'Admin' || $reservation['user_id'] == $_SESSION['user_id']) {
+            $noteContent = $reservation['note'];
+        }
+
         // Build event object
         $event = [
             'id' => $reservation['event_id'],
@@ -129,7 +138,7 @@ try {
             'color' => $color,
             'status' => $reservation['status'],
             'phone' => $reservation['phone'],
-            'note' => $reservation['note'],
+            'note' => $noteContent,
             'user_role' => $userRole,  // NOW INCLUDED
             'allDay' => false
         ];

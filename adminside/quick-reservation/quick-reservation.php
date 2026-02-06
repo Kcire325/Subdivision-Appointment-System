@@ -37,11 +37,12 @@ if (isset($_GET['action']) && $_GET['action'] === 'fetch_bookings') {
         // Fetch reservations from ALL users (both regular users and admins)
         $sql = "SELECT 
                     r.*,
-                    CONCAT(u.FirstName, ' ', u.LastName) as title,
+                    CONCAT(ui.FirstName, ' ', ui.LastName) as title,
                     u.Email as resident_email,
                     u.Role as user_role
                 FROM reservations r
                 INNER JOIN users u ON r.user_id = u.user_id
+                LEFT JOIN userinfo ui ON r.user_id = ui.user_id
                 WHERE r.facility_name = :facility
                 AND r.status IN ('confirmed', 'approved', 'pending', 'rejected')
                 AND r.overwriteable = 0
@@ -265,7 +266,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 $user_id = $_SESSION['user_id'];
-$userStmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$userStmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                           FROM users u 
+                           JOIN userinfo ui ON u.user_id = ui.user_id 
+                           WHERE u.user_id = ?");
 $userStmt->execute([$user_id]);
 $user = $userStmt->fetch(PDO::FETCH_ASSOC);
 

@@ -19,7 +19,10 @@ if ($conn->connect_error) {
 
 // Fetch current user data for sidebar
 $user_id = $_SESSION['user_id'];
-$userStmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$userStmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                           FROM users u 
+                           JOIN userinfo ui ON u.user_id = ui.user_id 
+                           WHERE u.user_id = ?");
 $userStmt->bind_param("i", $user_id);
 $userStmt->execute();
 $userResult = $userStmt->get_result();
@@ -117,10 +120,10 @@ $res_sql = "SELECT
                 r.payment_proof,
                 r.cost,
                 " . ($notes_column_exists ? "r.notes," : "") . "
-                u.FirstName,
-                u.LastName
+                ui.FirstName,
+                ui.LastName
             FROM reservations r
-            LEFT JOIN users u ON r.user_id = u.user_id
+            LEFT JOIN userinfo ui ON r.user_id = ui.user_id
             WHERE LOWER(r.status) = 'pending'
             AND r.overwriteable = 0
             ORDER BY r.id DESC";

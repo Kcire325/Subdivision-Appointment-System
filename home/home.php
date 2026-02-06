@@ -22,7 +22,10 @@ $conn->exec("SET time_zone = '+08:00'");
 $user_id = $_SESSION['user_id'];
 
 /* Sidebar user */
-$stmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$stmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                       FROM users u 
+                       JOIN userinfo ui ON u.user_id = ui.user_id 
+                       WHERE u.user_id = ?");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -361,7 +364,7 @@ $todayNotifications = $todayNotificationsStmt->fetchAll(PDO::FETCH_ASSOC);
 
         <script>
             $(function () {
-                const today = new Date().toISOString().split('T')[0];
+                const today = new Date().toLocaleDateString('en-CA');
 
                 $.getJSON('display_event.php', res => {
                     if (!res.status) return;

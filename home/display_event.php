@@ -23,6 +23,7 @@ try {
     exit;
 }
 
+date_default_timezone_set('Asia/Manila');
 $today = date('Y-m-d');
 
 // Fetch ONLY approved reservations (ALL facilities, TODAY)

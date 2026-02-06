@@ -13,9 +13,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email']);
     $password = $_POST['password'];
 
-    $sql = "SELECT user_id, Email, Password, Role, FirstName, LastName, Status 
-            FROM users 
-            WHERE Email = ?";
+    $sql = "SELECT u.user_id, u.Email, u.Password, u.Role, u.Status, 
+                   ui.FirstName, ui.LastName
+            FROM users u
+            LEFT JOIN userinfo ui ON u.user_id = ui.user_id
+            WHERE u.Email = ?";
 
     $stmt = $conn->prepare($sql);
 

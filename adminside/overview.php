@@ -19,7 +19,10 @@ if ($conn->connect_error) {
 
 // Fetch current user data for sidebar
 $user_id = $_SESSION['user_id'];
-$userStmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$userStmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                           FROM users u 
+                           JOIN userinfo ui ON u.user_id = ui.user_id 
+                           WHERE u.user_id = ?");
 $userStmt->bind_param("i", $user_id);
 $userStmt->execute();
 $userResult = $userStmt->get_result();
@@ -76,28 +79,29 @@ $recent_audit_sql = "
         a.ActionType, 
         a.Timestamp, 
         a.EntityDetails,
-        u1.FirstName as AdminFirst, u1.LastName as AdminLast, 
-        u2.FirstName as ResidentFirst, u2.LastName as ResidentLast
+        a.Remarks,
+        ui1.FirstName as AdminFirst, ui1.LastName as AdminLast, 
+        ui2.FirstName as ResidentFirst, ui2.LastName as ResidentLast
     FROM auditlogs a
-    LEFT JOIN users u1 ON a.AdminID = u1.user_id
-    LEFT JOIN users u2 ON a.UserID = u2.user_id
+    LEFT JOIN userinfo ui1 ON a.AdminID = ui1.user_id
+    LEFT JOIN userinfo ui2 ON a.UserID = ui2.user_id
     ORDER BY a.Timestamp DESC 
     LIMIT 10
 ";
 $recent_audit_result = $conn->query($recent_audit_sql);
 
 // Pending requests (for Quick Actions in chart section)
-$pending_requests_sql = "SELECT r.*, u.FirstName, u.LastName 
+$pending_requests_sql = "SELECT r.*, ui.FirstName, ui.LastName 
                          FROM reservations r
-                         JOIN users u ON r.user_id = u.user_id
+                         LEFT JOIN userinfo ui ON r.user_id = ui.user_id
                          WHERE r.status='pending' AND r.admin_visible = 1 AND r.overwriteable = 0
                          ORDER BY r.created_at DESC";
 $pending_requests_result = $conn->query($pending_requests_sql);
 
 // Completed reservations this week (for bottom card)
-$completed_week_sql = "SELECT r.*, u.FirstName, u.LastName 
+$completed_week_sql = "SELECT r.*, ui.FirstName, ui.LastName 
                        FROM reservations r
-                       JOIN users u ON r.user_id = u.user_id
+                       LEFT JOIN userinfo ui ON r.user_id = ui.user_id
                        WHERE r.status='approved' 
                        AND r.event_end_date < CURDATE() 
                        AND YEARWEEK(r.event_end_date, 1) = YEARWEEK(CURDATE(), 1)
@@ -310,8 +314,8 @@ $completed_week_result = $conn->query($completed_week_sql);
                                     $actionMessage = 'rejected a reservation request';
                                     break;
                                 case 'Event_Created': // Admin created reservation
-                                    $bgClass = 'bg-success';
-                                    $iconSymbol = 'check_circle';
+                                    $bgClass = 'bg-primary';
+                                    $iconSymbol = 'event_available';
                                     $actionMessage = 'occupied a reservation slot';
                                     break;
                                 case 'Updated':
@@ -319,10 +323,17 @@ $completed_week_result = $conn->query($completed_week_sql);
                                     $iconSymbol = 'edit';
                                     $actionMessage = 'updated a reservation request';
                                     break;
-                                default: // Legacy or trigger created
-                                    $bgClass = 'bg-secondary';
-                                    $iconSymbol = 'info';
-                                    $actionMessage = 'performed an action';
+                                default:
+                                    // Check remarks for "Admin occupied slot" if ActionType is missing/empty
+                                    if (trim($log['Remarks']) === 'Admin occupied slot') {
+                                        $bgClass = 'bg-primary';
+                                        $iconSymbol = 'event_available';
+                                        $actionMessage = 'occupied a reservation slot';
+                                    } else {
+                                        $bgClass = 'bg-secondary';
+                                        $iconSymbol = 'info';
+                                        $actionMessage = 'performed an action';
+                                    }
                             }
 
                             // Admin Name
@@ -357,7 +368,7 @@ $completed_week_result = $conn->query($completed_week_sql);
                                         <?= htmlspecialchars($timestamp); ?>
                                     </div>
                                     <div class="small">
-                                        <?php if ($log['ActionType'] !== 'Event_Created'): ?>
+                                        <?php if ($log['ActionType'] !== 'Event_Created' && trim($log['Remarks']) !== 'Admin occupied slot'): ?>
                                             <span><strong>Resident:</strong>
                                                 <?= htmlspecialchars($residentName); ?>
                                             </span><br>

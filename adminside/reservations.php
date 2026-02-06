@@ -20,7 +20,10 @@ if ($conn->connect_error) {
 
 /* Admin info */
 $user_id = $_SESSION['user_id'];
-$userStmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$userStmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                           FROM users u 
+                           JOIN userinfo ui ON u.user_id = ui.user_id 
+                           WHERE u.user_id = ?");
 $userStmt->bind_param("i", $user_id);
 $userStmt->execute();
 $user = $userStmt->get_result()->fetch_assoc();
@@ -53,14 +56,16 @@ SELECT
     r.time_end,
     r.status,
     r.note,
+    r.reason,
     r.updated_at,
     r.payment_proof,
     r.cost,
-    u.FirstName,
-    u.LastName,
+    ui.FirstName,
+    ui.LastName,
     u.Role
 FROM reservations r
 LEFT JOIN users u ON r.user_id = u.user_id
+LEFT JOIN userinfo ui ON r.user_id = ui.user_id
 WHERE r.status IN ('approved','rejected')
 AND r.admin_visible = 1
 AND r.overwriteable = 0
@@ -318,6 +323,7 @@ while ($f = $facility_list->fetch_assoc()) {
                                         data-time="<?= date('g:i A', strtotime($row['time_start'])) ?> - <?= date('g:i A', strtotime($row['time_end'])) ?>"
                                         data-cost="<?= number_format($row['cost'] ?? 0, 2) ?>"
                                         data-status="<?= ucfirst($row['status']) ?>"
+                                        data-reason="<?= htmlspecialchars($row['reason'] ?? '') ?>"
                                         data-note="<?= htmlspecialchars($row['note'] ?: 'No notes provided') ?>"
                                         data-updated="<?= date('M d, Y g:i A', strtotime($row['updated_at'])) ?>"
                                         data-payment="<?= htmlspecialchars($row['payment_proof']) ?>" <?php
@@ -405,6 +411,7 @@ while ($f = $facility_list->fetch_assoc()) {
                 const cost = row.dataset.cost;
                 const status = row.dataset.status;
                 const updated = row.dataset.updated;
+                const reason = row.dataset.reason;
                 const note = row.dataset.note;
                 const payment = row.dataset.payment;
                 const invoiceUrl = row.dataset.invoiceUrl;
@@ -449,7 +456,20 @@ while ($f = $facility_list->fetch_assoc()) {
                         <div class="detail-label">Last Updated</div>
                         <div class="detail-value">${updated}</div>
                     </div>
+                `;
 
+                // Rejection Details
+                if (status === 'Rejected') {
+                    htmlContent += `
+                        <div class="section-title text-danger">Rejection Details</div>
+                        <div class="detail-row">
+                            <div class="detail-label text-danger">Reason</div>
+                            <div class="detail-value text-danger fw-bold">${reason || 'No reason provided'}</div>
+                        </div>
+                    `;
+                }
+
+                htmlContent += `
                     <div class="section-title">Additional Info</div>
                     <div class="detail-row">
                         <div class="detail-label">Resident Note</div>

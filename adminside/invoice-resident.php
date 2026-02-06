@@ -30,9 +30,10 @@ if (!$reservation_id) {
 // Fetch reservation details with user information
 // NOTE: Removed "AND r.user_id = :user_id" so Admin can view ANY resident reservation
 $stmt = $conn->prepare("
-    SELECT r.*, u.FirstName, u.LastName, u.Block, u.Lot, u.StreetName, u.Email
+    SELECT r.*, ui.FirstName, ui.LastName, ui.Block, ui.Lot, ui.StreetName, u.Email
     FROM reservations r
     JOIN users u ON r.user_id = u.user_id
+    JOIN userinfo ui ON r.user_id = ui.user_id
     WHERE r.id = :id
 ");
 $stmt->execute([':id' => $reservation_id]);

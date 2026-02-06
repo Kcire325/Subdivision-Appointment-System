@@ -34,18 +34,38 @@ $params = [];
 
 // Apply ActionType Filters
 if (!empty($filters)) {
-    $filterPlaceholders = [];
-    foreach ($filters as $index => $filter) {
-        // Map frontend "Admin Created" to "Event_Created" if needed, 
-        // but it's cleaner to send the actual DB value from frontend.
-        // We'll assume frontend sends DB values or we handle mapping there.
-        $paramName = ":action_$index";
-        $filterPlaceholders[] = $paramName;
-        $params[$paramName] = $filter;
+    $filterClauses = [];
+    $hasAdminFilter = false;
+    $standardFilters = [];
+
+    foreach ($filters as $filter) {
+        if ($filter === 'Event_Created') {
+            $hasAdminFilter = true;
+        } else {
+            $standardFilters[] = $filter;
+        }
     }
 
-    if (!empty($filterPlaceholders)) {
-        $whereClauses[] = "a.ActionType IN (" . implode(', ', $filterPlaceholders) . ")";
+    // Process Standard Filters (Approved, Rejected, etc.)
+    if (!empty($standardFilters)) {
+        $placeholders = [];
+        foreach ($standardFilters as $i => $sf) {
+            $pName = ":sf_$i";
+            $params[$pName] = $sf;
+            $placeholders[] = $pName;
+        }
+        $filterClauses[] = "a.ActionType IN (" . implode(', ', $placeholders) . ")";
+    }
+
+    // Process Admin Filter (ActionType OR Remarks)
+    if ($hasAdminFilter) {
+        // Includes both explicit ActionType OR the fallback Remarks
+        $filterClauses[] = "(a.ActionType = 'Event_Created' OR a.Remarks = 'Admin occupied slot')";
+    }
+
+    if (!empty($filterClauses)) {
+        // Combine with OR if user wants (Approved OR Admin), effectively standard behavior for multiple checkboxes
+        $whereClauses[] = "(" . implode(' OR ', $filterClauses) . ")";
     }
 } else {
     // Default exclusion if no filters are active (optional, based on preference)
@@ -71,8 +91,8 @@ $whereBuf = implode(' AND ', $whereClauses);
 // Count Query
 $sqlCount = "SELECT COUNT(*) as total 
              FROM auditlogs a
-             LEFT JOIN users u1 ON a.AdminID = u1.user_id
-             LEFT JOIN users u2 ON a.UserID = u2.user_id
+             LEFT JOIN userinfo ui1 ON a.AdminID = ui1.user_id
+             LEFT JOIN userinfo ui2 ON a.UserID = ui2.user_id
              WHERE $whereBuf";
 
 $stmtCount = $conn->prepare($sqlCount);
@@ -89,11 +109,12 @@ $sql = "SELECT
             a.ActionType, 
             a.Timestamp, 
             a.EntityDetails,
-            u1.FirstName as AdminFirst, u1.LastName as AdminLast, 
-            u2.FirstName as ResidentFirst, u2.LastName as ResidentLast
+            a.Remarks,
+            ui1.FirstName as AdminFirst, ui1.LastName as AdminLast, 
+            ui2.FirstName as ResidentFirst, ui2.LastName as ResidentLast
         FROM auditlogs a
-        LEFT JOIN users u1 ON a.AdminID = u1.user_id
-        LEFT JOIN users u2 ON a.UserID = u2.user_id
+        LEFT JOIN userinfo ui1 ON a.AdminID = ui1.user_id
+        LEFT JOIN userinfo ui2 ON a.UserID = ui2.user_id
         WHERE $whereBuf
         ORDER BY a.Timestamp DESC 
         LIMIT :offset, :limit";
@@ -139,8 +160,8 @@ foreach ($logs as $log) {
             $actionMessage = 'rejected a reservation request';
             break;
         case 'Event_Created':
-            $bgClass = 'bg-success';
-            $iconSymbol = 'check_circle';
+            $bgClass = 'bg-primary';
+            $iconSymbol = 'event_available';
             $actionMessage = 'occupied a reservation slot';
             break;
         case 'Updated':
@@ -148,12 +169,18 @@ foreach ($logs as $log) {
             $iconSymbol = 'edit';
             $actionMessage = 'updated a reservation request';
             break;
+        default:
+            if (isset($log['Remarks']) && trim($log['Remarks']) === 'Admin occupied slot') {
+                $bgClass = 'bg-primary';
+                $iconSymbol = 'event_available';
+                $actionMessage = 'occupied a reservation slot';
+            }
     }
 
     // If Admin occupied the slot (Event_Created), we should NOT show "Resident: Admin Name"
     // The user requested it to "just disappear"
     $residentDisplay = $residentName;
-    if ($log['ActionType'] === 'Event_Created') {
+    if ($log['ActionType'] === 'Event_Created' || (isset($log['Remarks']) && trim($log['Remarks']) === 'Admin occupied slot')) {
         $residentDisplay = null;
     }
 

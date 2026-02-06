@@ -27,7 +27,10 @@ try {
 
 
 $user_id = $_SESSION['user_id'];
-$userStmt = $conn->prepare("SELECT FirstName, LastName, ProfilePictureURL FROM users WHERE user_id = ?");
+$userStmt = $conn->prepare("SELECT ui.FirstName, ui.LastName, ui.ProfilePictureURL 
+                            FROM users u 
+                            JOIN userinfo ui ON u.user_id = ui.user_id 
+                            WHERE u.user_id = ?");
 $userStmt->execute([$user_id]);
 $loggedInUser = $userStmt->fetch(PDO::FETCH_ASSOC);
 
@@ -69,12 +72,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 }
 
 // Fetch Accounts - Order: Active first, then Archived; within each, Admin first then Resident; newest first
-$query = "SELECT user_id, FirstName, LastName, Email, Role, Status, ProfilePictureURL, Birthday, Block, Lot, StreetName 
-          FROM users 
+$query = "SELECT u.user_id, u.Email, u.Role, u.Status, 
+                 ui.FirstName, ui.LastName, ui.ProfilePictureURL, ui.Birthday, ui.Block, ui.Lot, ui.StreetName 
+          FROM users u
+          LEFT JOIN userinfo ui ON u.user_id = ui.user_id
           ORDER BY 
-              CASE Status WHEN 'Active' THEN 0 WHEN 'Archived' THEN 1 ELSE 2 END,
-              CASE Role WHEN 'Admin' THEN 0 WHEN 'Resident' THEN 1 ELSE 2 END,
-              user_id DESC";
+              CASE u.Status WHEN 'Active' THEN 0 WHEN 'Archived' THEN 1 ELSE 2 END,
+              CASE u.Role WHEN 'Admin' THEN 0 WHEN 'Resident' THEN 1 ELSE 2 END,
+              u.user_id DESC";
 
 $stmt = $conn->query($query);
 $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
