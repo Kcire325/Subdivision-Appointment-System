@@ -78,12 +78,18 @@ if (!empty($filters)) {
 // Apply Search
 if ($search) {
     $whereClauses[] = "(
-        u1.FirstName LIKE :search OR u1.LastName LIKE :search OR
-        u2.FirstName LIKE :search OR u2.LastName LIKE :search OR
-        a.EntityDetails LIKE :search OR
-        a.Remarks LIKE :search
+        ui1.FirstName LIKE :s1 OR ui1.LastName LIKE :s2 OR
+        ui2.FirstName LIKE :s3 OR ui2.LastName LIKE :s4 OR
+        a.EntityDetails LIKE :s5 OR
+        a.Remarks LIKE :s6
     )";
-    $params[':search'] = "%$search%";
+    $term = "%$search%";
+    $params[':s1'] = $term;
+    $params[':s2'] = $term;
+    $params[':s3'] = $term;
+    $params[':s4'] = $term;
+    $params[':s5'] = $term;
+    $params[':s6'] = $term;
 }
 
 $whereBuf = implode(' AND ', $whereClauses);
